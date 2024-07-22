@@ -1,0 +1,35 @@
+body {
+  background: rgb(204,204,204);
+}
+.page {
+  background: white;
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 0.5cm;
+  box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
+}
+
+.page .body{
+  padding: 1cm 1cm 1cm 1.7cm !important;
+
+}
+.page .body.smalled{
+  padding: 1cm !important;
+  font-size: 16px;
+}
+.page .body.large{
+  padding: 2cm 2cm 2cm 2.5cm !important;
+}
+.page .body.medium{
+  padding: 1cm 1.5cm 1.5cm 2cm !important;
+}
+.page[size="A4"] {
+  width: 21cm;
+  height: 29.7cm;
+  size: portrait
+}
+.page[size="A4"][layout="landscape"] {
+  width: 29.7cm;
+  height: 21cm;
+  size: landscape;
+}

@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'SukhumvitSet';
+  src: url("../../fonts/SukhumvitSet/SukhumvitSet-Text.otf");
+  src: url("../../fonts/SukhumvitSet/SukhumvitSet-Text.eot") format("embedded-opentype"), url("../../fonts/SukhumvitSet/SukhumvitSet-Text.woff") format("woff"), url("../../fonts/SukhumvitSet/SukhumvitSet-Text.woff2") format("woff2"), url("../../fonts/SukhumvitSet/SukhumvitSet-Text.ttf") format("truetype"), url("../../fonts/SukhumvitSet/SukhumvitSet-Text.svg#SukhumvitSet") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}

@@ -1,0 +1,284 @@
+* {
+  padding: 0px;
+  margin: 0px;
+  font-family: 'CSChatThaiUI',Helvetica,Arial,sans-serif;
+}
+
+body {
+  /*background-position:center;*/
+  background-color: #fff;
+  font-weight: normal;
+}
+body #wrapper {
+  background-color: #F7F8FA !important;
+}
+body input, body textarea, body select {
+  color: #111 !important;
+  font-size: 16px !important;
+}
+body select {
+  padding: 2px;
+  font-size: 14px !important;
+}
+body button {
+  font-size: 16px !important;
+}
+body .panel-group {
+  font-size: 15px;
+}
+body .panel-group .panel-heading h4 {
+  font-size: 15px;
+  font-weight: bold;
+}
+body .head_txt1 {
+  padding-top: 5px;
+  background-color: #666666;
+  font-size: 20px;
+  font-weight: bold;
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: rgba(255, 255, 255, 0.3) 0px 3px 3px;
+}
+
+ul.nav-tabs > li > a {
+  font-size: 17px;
+  font-weight: 700;
+  border: 0;
+  background-color: #f1f5f7 !important;
+  color: #959797 !important;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+ul.nav-tabs > li.active a {
+  font-size: 16px;
+  font-weight: bold;
+  border-top: 1px #eee solid !important;
+  border-left: 1px #eee solid !important;
+  border-right: 1px #eee solid !important;
+  background-color: #FFF !important;
+  color: #333 !important;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+.table thead, .table tbody, .table-responsive {
+  font-size: 16px !important;
+  color: #000;
+  overflow-x: hidden !important;
+}
+
+#dtable {
+  border-top: 0.5px solid #072b42;
+  border-left: 0.5px solid #072b42;
+}
+
+#dtable th, #dtable td {
+  border-right: 0.5px solid #072b42;
+  border-bottom: 0.5px solid #072b42;
+}
+
+.open > a, .open > a:hover, .open > a:focus {
+  background: transparent !important;
+}
+
+.open > a, .open > a:focus, .open > a:hover {
+  background-color: transparent !important;
+}
+
+.head_menu {
+  padding: 5px;
+  margin-left: 55px;
+  margin-top: -15px;
+  background-color: white !important;
+  color: #000;
+}
+.head_menu li a {
+  font-size: 16px !important;
+}
+
+.modal, .modal-title {
+  font-size: 20px;
+}
+.modal h4, .modal-title h4 {
+  font-size: 20px;
+}
+
+.btn-save {
+  background: #072b42 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#072b42, #0f6fb4) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#072b42, #0f6fb4) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#072b42, #0f6fb4) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#072b42, #0f6fb4) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+.btn-cancel {
+  background: #3c3f33 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#3c3f33, #7a8168) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#3c3f33, #7a8168) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#3c3f33, #7a8168) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#3c3f33, #7a8168) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  color: #fff !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+.btn-back {
+  background: #323596 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#323596, #a4298f) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#323596, #a4298f) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#323596, #a4298f) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#323596, #a4298f) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  color: #fff !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+.btn-add {
+  background: #800000 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#800000, #FF0000) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#800000, #FF0000) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#800000, #FF0000) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#800000, #ff0000) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+.btn-overview {
+  background: #008080 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#001111, #008080) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#001111, #008080) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#001111, #008080) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#001111, #008080) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+.btn-search {
+  background: #351A00 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#351A00, #808000) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#351A00, #808000) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#351A00, #808000) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#351a00, #808000) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+.btn-export {
+  background: #162800 !important;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(#162800, #408000) !important;
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(#162800, #408000) !important;
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(#162800, #408000) !important;
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(#162800, #408000) !important;
+  /* Standard syntax */
+  width: 114px !important;
+  margin-left: 0px !important;
+  border: 0 !important;
+  font-size: 16px !important;
+  padding: 4px 0 4px 0 !important;
+}
+
+#dtable thead tr th {
+  font-weight: normal !important;
+  background-color: #2F4050 !important;
+  color: #fff !important;
+  text-align: center !important;
+}
+
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu .submenu span {
+  font-size: 16px;
+  padding-top: 5px;
+  display: block;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.dropdown-submenu .disabled {
+  color: #b6b6b6 !important;
+}
+.dropdown-submenu .disabled i.fa-lock {
+  /*position:absolute !important;*/
+  margin-left: -10px;
+}
+
+.dropdown-submenu .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -1px;
+}
+
+.head_menu li.disabled {
+  color: #b6b6b6 !important;
+}
+
+.head_menu li i.fa-lock {
+  /*position:absolute !important;*/
+  margin-left: -10px;
+}
+
+.tabs-container .nav-tabs > li {
+  max-width: 240px !important;
+}
+
+.dropdown-menu > .active > a, .dropdown-menu > .active > a:focus, .dropdown-menu > .active > a:hover {
+  background-color: #31465b !important;
+}

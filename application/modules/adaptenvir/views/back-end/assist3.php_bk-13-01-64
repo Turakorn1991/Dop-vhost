@@ -1,0 +1,590 @@
+<div class="row">
+                <div class="col-lg-12">
+                    <div class="tabs-container">
+                      <ul class="nav nav-tabs">
+                          <li >
+                            <?php
+                              $tmp = $this->admin_model->getOnce_Application(30);
+                              $tmp1 = $this->admin_model->chkOnce_usrmPermiss(30,$user_id); //Check User Permission
+                            ?>
+                              <a <?php if(!isset($tmp1['perm_status'])) {?>
+                                  readonly
+                                <?php }else if($process_action!='Add'){?> href="<?php echo site_url('adaptenvir/inquire1/Edit/'.$impv_home_info['imp_home_id']);?>" <?php }?>  <?php if($usrpm['app_id']==30){?> aria-expanded="true" <?php }else{?> aria-expanded="false"<?php } ?>> (1) ข้อมูลผู้สูงอายุ
+                              </a>
+                          </li>
+                          <li >
+                            <?php
+                              $tmp = $this->admin_model->getOnce_Application(31);
+                              $tmp1 = $this->admin_model->chkOnce_usrmPermiss(31,$user_id); //Check User Permission
+                            ?>
+                              <a <?php if(!isset($tmp1['perm_status'])) {?>
+                                  readonly
+                                <?php }else if($process_action!='Add'){?> href="<?php echo site_url('adaptenvir/agree2/Edit/'.$impv_home_info['imp_home_id']);?>" <?php }?> <?php if($usrpm['app_id']==31){?>aria-expanded="true" <?php }?>>(2) ยินยอม</a>
+                          </li>
+                          <li class="active">
+                            <?php
+                              $tmp = $this->admin_model->getOnce_Application(32);
+                              $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                            ?>
+                              <a <?php if(!isset($tmp1['perm_status'])) {?>
+                                  readonly
+                                <?php }else if($process_action!='Add'){?> href="<?php echo site_url('adaptenvir/assist3/Edit/'.$impv_home_info['imp_home_id']);?>" <?php }?> data-toggle="tab"<?php if($usrpm['app_id']==32){?>aria-expanded="true" <?php }?>>(3) สงเคราะห์</a>
+                          </li>
+                      </ul>
+
+                   
+
+                        <div class="tab-content">
+                            <div id="tab-1" <?php if($usrpm['app_id']==32){?>class="tab-pane active" <?php }else{?> class="tab-pane"<?php }?>>
+                                <div class="panel-body">
+                                
+                                 <!--
+                                  <div class="row">
+                                      <div class="col-lg-12" style="padding-top: 15px; padding-bottom: 15px;">
+                                          <h2 style="color: #4e5f4d"></h2>
+                                          <div class="col-lg-12 text-right  border-bottom">
+                                          <?php
+                                                if($process_action=='Edit') {
+                                                ?>
+                                                <a data-toggle="modal" data-target="#myPrint" style="color: #000; padding-left: 20px; padding-right: 20px;" title="พิมพ์แบบฟอร์ม" class="btn btn-default">
+                                                    <i class="fa fa-file-text" aria-hidden="true"></i>
+                                                </a>
+                                                <?php
+                                                }
+                                                ?>
+
+                                                &nbsp;
+                                                <?php
+                                                  $tmp = $this->admin_model->getOnce_Application(32);
+                                                  $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                                                ?>
+                                                <a <?php if(!isset($tmp1['perm_status'])) {?>
+                                                  readonly
+                                                <?php }else{?> onclick="return opnCnfrom()" <?php }?> style="color: #000; padding-left: 20px; padding-right: 20px;" title="บันทึกช้อมูล" class="btn btn-default">
+                                                    <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                                                </a>
+
+
+                                                &nbsp;
+                                                <?php
+                                                  $tmp = $this->admin_model->getOnce_Application(32);
+                                                  $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                                                ?>
+                                                <a onclick="return opnBck()" <?php if(!isset($tmp1['perm_status'])) {?>
+                                                  readonly
+                                                <?php }else{?> href="<?php echo site_url('adaptenvir/adaptenvir_list');?>" <?php }?> style="color: #000; padding-left: 20px; padding-right: 20px;" title="ย้อนกลับ" class="btn btn-default">
+                                                    <i class="fa fa-undo" aria-hidden="true"></i>
+                                                </a>
+
+                                                <?php
+                                                if($process_action=='Edit') {
+                                                ?>
+                                                &nbsp;
+                                                <?php
+                                                  $tmp = $this->admin_model->getOnce_Application(32);
+                                                  $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                                                ?>
+                                                <a data-id=<?php echo $impv_home_info['imp_home_id'];?> onclick="opn(this)" <?php if(!isset($tmp1['perm_status'])) {?>
+                                                  readonly
+                                                <?php }?> style="color: #000; padding-left: 20px; padding-right: 20px;" title="ลบข้อมูล" class="btn btn-default">
+                                                    <i class="glyphicon glyphicon-trash" aria-hidden="true"></i>
+                                                </a>
+                                                <?php
+                                                }
+                                                ?>
+
+                                          </div>
+                                      </div>
+                                  </div> close row tab-bar-->
+
+
+                                      <div id="tmp_menu" hidden='hidden'>
+                                       <!--
+                                        <?php
+                                         if($process_action=='Edit') {
+                                        ?>
+                                          <a class="navbar-minimalize minimalize-styl-2 btn btn-primary" style="margin-top: 11px; margin-left: 0px; background-color: #2f4250; border: 0;font-size: 17px; padding: 5px 20px 3px 20px;" href="" data-toggle="modal" data-target="#myPrint">
+                                          <i class="fa fa-file-text" aria-hidden="true"></i> </a>
+                                        <?php }?>
+
+                                        <?php
+                                          $tmp = $this->admin_model->getOnce_Application(32);
+                                          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                                        ?>
+                                        <a class="navbar-minimalize minimalize-styl-2 btn btn-primary" style="margin-top: 11px; margin-left: 0px; background-color: #2f4250; border: 0;font-size: 17px; padding: 5px 20px 3px 20px;"
+                                        <?php if(!isset($tmp1['perm_status'])) {?>
+                                                readonly
+                                              <?php }else{?> onclick="return opnCnfrom()"
+                                        <?php }?> title="<?php if(isset($tmp['app_name'])){echo $tmp['app_name'];}?>">
+                                        <i class="fa fa-floppy-o" aria-hidden="true"></i> </a>
+                                         -->
+                                        <?php
+                                          $tmp = $this->admin_model->getOnce_Application(32);
+                                          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                                        ?>
+
+                                        <!--
+                                        <?php
+                                         if($process_action=='Edit') {
+                                          $tmp = $this->admin_model->getOnce_Application(32);
+                                          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(32,$user_id); //Check User Permission
+                                        ?>
+                                        <a data-id=<?php echo $impv_home_info['imp_home_id'];?> onclick="opn(this)" class="navbar-minimalize minimalize-styl-2 btn btn-primary" style="margin-top: 11px; margin-left: 0px; background-color: #2f4250; border: 0;font-size: 17px; padding: 5px 20px 3px 20px;"
+                                        <?php if(!isset($tmp1['perm_status'])) {?>
+                                                readonly
+                                              <?php }else{?>
+                                        <?php }?> title="<?php if(isset($tmp['app_name'])){echo $tmp['app_name'];}?>">
+                                        <i class="fa fa-trash" aria-hidden="true"></i> </a>
+                                        <?php } ?>
+
+                                        <a class="navbar-minimalize minimalize-styl-2 btn btn-primary" style="margin-top: 11px; margin-left: 0px; background-color: #2f4250; border: 0;font-size: 17px; padding: 5px 20px 3px 20px;" href="<?php echo site_url('control/main_module');?>"><i class="fa fa-caret-left" aria-hidden="true"></i> </a>
+                                        -->
+                                    </div>
+                                    <script>
+                                      setTimeout(function(){
+                                        $("#menu_topright").html($("#tmp_menu").html());
+                                      },300);
+                                      $("#guide-book").click(function(){
+                                        window.open('/assets/modules/adaptenvir/guide/Adaptenvir_Manual.pdf', '_blank');
+                                      });
+                                    </script>
+
+                                 <div class="form-group row">
+                                      <?php
+                                      $imp_home_id = '';
+                                      $imp_home_id_original = $impv_home_info['imp_home_id'];
+
+                                      if($process_action=='Add')$process_action = 'Added';
+                                      if($process_action=='Edit'){$process_action = 'Edited'; $imp_home_id = '/'.$impv_home_info['imp_home_id'];}
+
+                                      echo form_open_multipart('adaptenvir/assist3/'.$process_action.$imp_home_id,array('id'=>'form1'));
+                                      ?>
+
+                                      <input type="hidden" name="<?php echo $csrf['name'];?>" value="<?php echo $csrf['hash'];?>" /> <!-- Set hidden csrf field -->
+                                      <input type="submit" value="submit" name="bt_submit" hidden="hidden">
+
+                                      <?php echo validation_errors('<div class="error" style="font-size: 18px; padding-left: 20px">', '</div>'); ?>
+                                      <div class="panel-group" style="margin-bottom: 0px;">
+                                            <div class="panel panel-default" style="border: 0;">
+                                              <div class="panel-heading">
+                                                <h4><font >ข้อมูลผู้สูงอายุ</font></h4>
+                                              </div>
+                                              <div class="panel-body" style="border: 0;padding: 20px; padding-bottom: 5px;">
+                                                <div class="form-group row">
+                                                  <div class="col-xs-12 col-sm-3" style="padding: 7px 15px;"><span style="font-weight: bold;">เลขประจำตัวประชาชน: </span><?php echo $impv_personal_info['pid'];?></div>
+                                                  <div class="col-xs-12 col-sm-3" style="padding: 7px 15px;"><span style="font-weight: bold;">ชื่อตัว/ชื่อสกุล: </span><?php echo $impv_personal_info['name'];?></div>
+                                                  <div class="col-xs-12 col-sm-3" style="padding: 7px 15px;"><span style="font-weight: bold;">เพศ: </span> <span id="gender_name"> <?php echo $impv_personal_info['gender_name'];?></span> </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                      </div>
+                                      <div class="panel-group">
+
+                                          <div class="panel panel-default" style="border: 0">
+                                                <div class="panel-heading"><h4>ผลการสงเคราะห์</h4>  </div>
+                                                <div class="panel-body" style="border:0; padding: 20px;">
+
+                                                        <div class="form-group row">
+                                                          <div class="col-xs-12 col-sm-3">
+                                                              <label for="" class="col-2 col-form-label">ผลการพิจารณา</label><br>
+                                                              <label>
+                                                                <div class="checkbox-inline i-checks"><input type="radio" name="impv_home_info[consi_result]" value="อนุมัติ" <?php if(@$impv_home_info['consi_result'] == 'อนุมัติ'){ echo 'checked'; } ?>>
+                                                                ได้รับอนุมัติ
+                                                              </label></div>
+
+                                                          </div>
+                                                          <div class="col-xs-12 col-sm-3">
+                                                              <label for="" class="col-2 col-form-label">&nbsp;</label><br>
+                                                              <label>
+                                                                <div class="checkbox-inline i-checks"><input type="radio" name="impv_home_info[consi_result]" value="ไม่อนุมัติ" <?php if(@$impv_home_info['consi_result'] == 'ไม่อนุมัติ'){ echo 'checked'; } ?>>
+                                                                ไม่ได้รับอนุมัติ
+                                                              </label></div>
+                                                          </div>
+
+                                                          <div class="col-xs-12 col-sm-6">
+                                                              <label for="" class="col-2 col-form-label">&nbsp;</label>
+                                                              <input title="ระบุสาเหตุ" placeholder="ระบุสาเหตุ" class="form-control" type="text" name="impv_home_info[consi_result_remark]" id="consi_result_remark" value="<?php echo @$impv_home_info['consi_result_remark'];?>" <?php if(@$impv_home_info['consi_result'] != 'ไม่อนุมัติ'){ echo 'disabled'; } ?>/>
+                                                          </div>
+                                                          <script type="text/javascript">
+                                                            $("input[name='impv_home_info[consi_result]']").on('ifChanged',function() {
+                                                                if($(this).val() == 'ไม่อนุมัติ'){
+                                                                  $("#consi_result_remark").prop('disabled', false ).focus();
+                                                                }else{
+                                                                  $("#consi_result_remark").val('');
+                                                                  $("#consi_result_remark").prop('disabled', true );
+                                                                }
+                                                               
+                                                            });
+                                                          </script>
+                                                        </div>
+
+                                                        <div class="form-group row">
+                                                          <div class="col-xs-12 col-sm-3">
+                                                              <label for="" class="col-2 col-form-label">ผลการดำเนินงาน</label>
+                                                              <label>&nbsp;</label>
+                                                          </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                          <div class="col-xs-12 col-sm-3">
+                                                                <label for="datetimepicker1" class="col-2 col-form-label" style="color: red;">วันที่ดำเนินการเสร็จสิ้น </label>
+                                                                <div id="datetimepicker1" class="col-10 input-group date has-error" data-date-format="dd-mm-yyyy">
+                                                                    <input title="วันที่ดำเนินการเสร็จสิ้น" placeholder="เลือกวันที่" class="form-control" type="text" name="impv_home_info[date_of_finish]" required>
+                                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                                                                </div>
+                                                                <script type="text/javascript">
+                                                                <?php
+                                                                $tmp = explode('-',@$impv_home_info['date_of_finish']);
+                                                                ?>
+                                                                $(function () {
+                                                                $("#datetimepicker1").datepicker({
+                                                                  autoclose: true,
+                                                                  todayHighlight: true,
+                                                                  format: 'dd/mm/yyyy',
+                                                                   todayBtn: true,
+                                                                   language: 'th',
+                                                                   thaiyear: true
+                                                                })<?php if(count($tmp)==3){?>.datepicker('update', new Date(Date.UTC(<?php echo $tmp[2];?>,<?php echo $tmp[1];?>-1,<?php echo $tmp[0];?>)));<?php }?>
+                                                                });
+                                                                </script>
+                                                           </div>
+
+                                                          <div class="col-xs-12 col-sm-3">
+                                                              <label for="" class="col-2 col-form-label">ค่าใช้จ่ายการซ่อมแซมบ้านพักผู้สูงอายุ (บาท)</label>
+                                                              <input title="ค่าใช้จ่ายการซ่อมแซมบ้านพักผู้สูงอายุ (บาท)" placeholder="ค่าใช้จ่ายการซ่อมแซมบ้านพักผู้สูงอายุ (บาท)" class="form-control" type="text" onkeyup="nonthnumber(this)"  name="impv_home_info[case_budget]" value="<?php echo @$impv_home_info['case_budget'];?>"/>
+                                                          </div>
+
+                                                          <div class="col-xs-12 col-sm-3">
+                                                              <label for="" class="col-2 col-form-label">ค่าบริหารจัดการ (บาท)</label>
+                                                              <input title="่ค่าบริหารจัดการ (บาท)" id="case_budget" placeholder="ค่าบริหารจัดการ (บาท)" class="form-control" type="text" onkeyup="nonthnumber(this)"  name="impv_home_info[mgt_budget]" value="<?php echo @$impv_home_info['mgt_budget'];?>"/>
+                                                          </div>
+
+                                                        </div>
+
+                                                        <div class="form-group row">
+                                                            <div class="panel panel-default" style="border: 0">
+                                                                <div class="panel-heading">
+                                                                  <h4>รูปภาพถ่ายประกอบ</h4>  
+                                                                  <h5>*รับรูปภาพขนาดไม่เกิน 5 MB(ขนาดพิเซล 5000 x 3500 พิกเซลโดยประมาณ) ต่อรูปภาพ และอัปโหลดได้ไม่เกินครั้งละ 10 รูปภาพ</h5>
+                                                                </div>
+                                                            
+                                                            </div>
+                                                        </div>
+                                                <!-- <div class="panel panel-default" style="border: 0">
+                                                <div class="panel-heading"><h4>ภาพถ่ายประกอบ</h4>  </div>
+                                                <div class="panel-body" style="border:0; padding: 20px;"> -->
+
+                                                        <!-- UPDATE IMG-->
+                                                        <div class="form-group row">
+                                                        <div class="col-xs-12 col-sm-12" id="parent_0">          
+                                                             <div class="col-xs-12 col-sm-4 col-lg-3 element photo-contianer"   style="margin-top: 20px; height:300px; word-wrap: break-word;" >
+                                                                <text class="text-left">
+                                                                  <b style="color: red;">ชื่อภาพ* : </b>
+                                                                </text>
+                                                          
+                                                                    <input type="text" name="photo2[]" maxlength="25" style="width:210px; height:30px; margin-bottom:20px;" placeholder="สูงสุด 25 ตัวอักษร";> <!-- 270px, 210px -->
+                                                                    <input type="file" name="img[]"  class="img_0" accept="image/png, image/jpeg"  style="display: none;" onchange="imgchange(this,'');">
+              
+                                                                    <button type="button" class="btn btn-lg" style="width: 268px; height:150px;"   onclick="brwImg(this,'');">
+                                                                          <span class="glyphicon glyphicon-plus" aria-hidden="true" style="font-size: -webkit-xxx-large;"></span>
+                                                                    </button>
+                                                          
+                                                                </div>  <!-- close div element -->
+
+                                                          </div> <!-- id="parent_0" -->
+
+  													                          	</div><!-- close form-group row-->
+                                                   
+                                                     </div>
+
+
+
+                                                </div><!-- close panel-body-->
+                                          </div><!-- close panel-default-->
+
+
+
+                                                          <hr>
+                                                                  <div class="row">
+                                                                   <div class="col-xs-12 col-sm-8">&nbsp;</div>
+                                                                   <div class="col-xs-12 col-sm-2">
+                                                                    <button style="height: 40px;width: 100% !important;" type="button" class="btn btn-primary btn-save" onclick="return opnCnfrom()"><i class="fa fa-floppy-o" aria-hidden="true"></i> บันทึก</button>
+                                                                    </div>
+                                                                    <div class="col-xs-12 col-sm-2">
+                                                                    <button style="height: 40px;width: 100% !important;" type="button" class="btn btn-primary btn-cancel" onclick="window.location.href='<?php echo site_url('adaptenvir/agree2/Edit/'.$this->uri->segment('4'));?>'"><i class="fa fa-undo" aria-hidden="true"></i> ย้อนกลับ</button>
+                                                                    </div>
+                                                                  </div><!-- close class row-->
+
+                                      </div><!-- close panel-group-->
+
+                                      <?php echo form_close(); ?>
+                                    </div><!-- close form-group row-->
+                                </div><!-- close panel-body  -->
+                            </div><!-- close tab-1 -->
+
+                            <div id="tab-2" <?php if($usrpm['app_id']==32){?>class="tab-pane active" <?php }else{?> class="tab-pane"<?php }?>>
+                                <div class="panel-body">
+                                <!-- === show image : start code === -->
+                                  <div class="form-group row">
+                                    <div class="col-xs-12 col-sm-12">
+                                                                              
+                                          <?php //if(($process_action!='Edit')&&($process_action!='Edited')){
+                                                  $test_photo_query = $this->common_model->query(
+                                                    "SELECT a.* 
+                                                    FROM impv_home_info_photo a
+                                                    where a.impv_home_id =  $imp_home_id_original and a.insert_datetime not like '' and a.insert_datetime is not null  
+                                                    order by  a.impv_home_photo_id ASC, a.insert_datetime ASC,a.impv_home_info_title ASC;")->result_array();
+                                                  
+
+                                                  
+
+                                          ?>
+                                          <?php $i=0;
+                                          foreach ($test_photo_query as $photo_query_result) { ?>
+                                          <?php
+                                          $date = date('Y-m-d',strtotime($photo_query_result['insert_datetime']));
+                                          $time = date('H:i:s',strtotime($photo_query_result['insert_datetime']));
+                                          ?>
+
+                                                  <div class="col-xs-12 col-sm-4 col-lg-3 element"   style="margin-top: 20px; height:300px; word-wrap: break-word;">
+                                                        <div style="margin-bottom:20px;">  
+                                                          <text>
+                                                            <!-- <b>ชื่อไฟล์ : <?php echo $photo_query_result['impv_home_photo_file']; ?><b><br> -->
+                                                            <b>ภาพที่ : <?php echo ++$i; ?><b><br>
+                                                            ชื่อภาพ : <?php echo $photo_query_result['impv_home_info_title']; ?><br>
+                                                            เพิ่มเมื่อวันที่ : <?php echo 'วันที่ '.formatDateThai1($date).' เวลา '.$time ?>
+                                                          </text>
+                                                        </div>
+                                                        <div class="container2">
+                                                          <img src="<?php echo base_url();?>assets/modules/adaptenvir/images/uploads/<?php echo $photo_query_result['impv_home_photo_file']; ?>" alt="..."  class="image">
+                                                          <div class="overlay">
+                                                            <input type="checkbox" class="che_del" > <span class="glyphicon glyphicon-trash trash" aria-hidden="true" onclick="opn_photo(this)" data-id="<?php echo $imp_home_id_original;?>" data-photoid="<?php echo $photo_query_result['impv_home_photo_id'];?>" ></span>
+                                                          </div>
+                                                        </div>
+                                                 </div>
+
+                                          <?php }// close loop foreach ?>
+
+                                    </div>
+                                  </div><!-- close form-group row-->
+                                  <!-- === show image : end code === -->
+                                </div><!-- close panel-body-->
+                            </div><!-- close tab-2-->
+
+<!--                             <div id="tab-3" <?php if($usrpm['app_id']==32){?>class="tab-pane active" <?php }else{?> class="tab-pane"<?php }?>>
+                                <div class="panel-body">
+                                  <strong>Tab-3</strong>
+                                </div> --><!-- close panel-body-->
+                            <!-- </div> --><!-- close tab-3-->
+
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+
+
+
+                                            <script type="text/javascript">
+                                              $(document).ready(function () {
+                                                $('.i-checks').iCheck({
+                                                  checkboxClass: 'icheckbox_square-green',
+                                                  radioClass: 'iradio_square-green',
+                                                  increaseArea: '20%'
+                                                });
+                                              });
+                                            </script>
+<!-- Delete Modal Del Photos -->
+<div id="dltModel_photo" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" style="color: #333; font-size: 20px;">หน้าต่างแจ้งเตือนเพื่อยืนยัน</h4>
+      </div>
+      <div class="modal-body">
+        <?php $str = getMsg('034');?>
+        <p><?php echo $str;?></p>
+        <!--<p>ยืนยันการลบ?</p>-->
+      </div>
+      <div class="modal-footer">
+        <button id="dltbtnYes_photo" type="button" class="btn btn-danger">ตกลง</button>
+        <button type="button" style="margin-bottom: 5px;"  aria-hidden="true" class="btn btn-default" data-dismiss="modal">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Delete Model -->
+
+
+<!-- Delete Modal -->
+<div id="dltModel" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" style="color: #333; font-size: 20px;">หน้าต่างแจ้งเตือนเพื่อยืนยัน</h4>
+      </div>
+      <div class="modal-body">
+        <?php $str = getMsg('034');?>
+        <p><?php echo $str;?></p>
+        <!--<p>ยืนยันการลบ?</p>-->
+      </div>
+      <div class="modal-footer">
+        <button id="dltbtnYes" type="button" class="btn btn-danger">ตกลง</button>
+        <button type="button" style="margin-bottom: 5px;"  aria-hidden="true" class="btn btn-default" data-dismiss="modal">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Delete Model -->
+
+<!-- Confirm Save Form  Modal -->
+<div id="sbmCnfrm" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" style="color: #333; font-size: 20px;">หน้าต่างแจ้งเตือนเพื่อยืนยัน</h4>
+      </div>
+      <div class="modal-body">
+        <?php $str = getMsg('054');?>
+        <p><?php echo $str;?></p>
+        <!--<p>ยืนยันการลบ?</p>-->
+      </div>
+      <div class="modal-footer">
+        <button id="savbtnYes" type="button" class="btn btn-success" data-dismiss="modal">ตกลง</button>
+        <button type="button" style="margin-bottom: 5px;" aria-hidden="true" class="btn btn-default" data-dismiss="modal">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Confirm Save Form  Modal -->
+
+<!-- Confirm Back Modal -->
+<div id="bckCnfrm" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" style="color: #333; font-size: 20px;">หน้าต่างแจ้งเตือนเพื่อยืนยัน</h4>
+      </div>
+      <div class="modal-body">
+        <?php $str = getMsg('061');?>
+        <p><?php echo $str;?></p>
+        <!--<p>ยืนยันการลบ?</p>-->
+      </div>
+      <div class="modal-footer">
+        <button id="bckbtnYes" type="button" class="btn btn-warning">ตกลง</button>
+        <button type="button" style="margin-bottom: 5px;" aria-hidden="true" class="btn btn-default" data-dismiss="modal">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Confirm Back Modal -->
+
+<!-- Print Modal -->
+<div class="modal fade" id="myPrint" role="dialog">
+  <div class="modal-dialog">
+
+     <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+         <h4 class="modal-title" style="color: #333; font-size: 20px;">พิมพ์แบบฟอร์ม</h4>
+       </div>
+      <div class="modal-body">
+        <div class="row">
+          <?php
+          $tmp = $this->admin_model->getOnce_Application(7);
+          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(7,get_session('user_id')); //Check User Permission
+          ?>
+          <div class="col-xs-12 col-sm-12" style="margin-bottom: 10px;"
+          <?php
+          if(!isset($tmp1['perm_status'])) { ?>
+              class="disabled"
+          <?php
+            }else if($usrpm['app_id']==7) {
+          ?>
+              class="active"
+          <?php
+            }
+          ?>
+           >
+            <a style="color: #333; font-size: 20px;" target="_blank" href="<?php echo site_url('report/A1');?>"><i class="fa fa-print" aria-hidden="true"></i> <?php if(isset($tmp1['perm_status'])) {echo $tmp1['app_name']; }?>
+            </a>
+          </div>
+
+          <?php
+          $tmp = $this->admin_model->getOnce_Application(8);
+          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(8,get_session('user_id')); //Check User Permission
+          ?>
+          <div class="col-xs-12 col-sm-12" style="margin-bottom: 10px;"
+          <?php
+          if(!isset($tmp1['perm_status'])) { ?>
+              class="disabled"
+          <?php
+            }else if($usrpm['app_id']==8) {
+          ?>
+              class="active"
+          <?php
+            }
+          ?>
+           >
+            <a style="color: #333; font-size: 20px; margin-bottom: 50px;" target="_blank" href="<?php echo site_url('report/A2');?>"><i class="fa fa-print" aria-hidden="true"></i> <?php if(isset($tmp1['perm_status'])) {echo $tmp1['app_name']; }?>
+            </a>
+          </div>
+
+          <?php
+          $tmp = $this->admin_model->getOnce_Application(9);
+          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(9,get_session('user_id')); //Check User Permission
+          ?>
+          <div class="col-xs-12 col-sm-12" style="margin-bottom: 10px;"
+          <?php
+          if(!isset($tmp1['perm_status'])) { ?>
+              class="disabled"
+          <?php
+            }else if($usrpm['app_id']==9) {
+          ?>
+              class="active"
+          <?php
+            }
+          ?>
+           >
+            <a style="color: #333; font-size: 20px; margin-bottom: 50px;" target="_blank" href="<?php echo site_url('report/A3');?>"><i class="fa fa-print" aria-hidden="true"></i> <?php if(isset($tmp1['perm_status'])) {echo $tmp1['app_name']; }?>
+            </a>
+          </div>
+
+          <?php
+          $tmp = $this->admin_model->getOnce_Application(10);
+          $tmp1 = $this->admin_model->chkOnce_usrmPermiss(10,get_session('user_id')); //Check User Permission
+          ?>
+          <div class="col-xs-12 col-sm-12" style="margin-bottom: 10px;"
+          <?php
+          if(!isset($tmp1['perm_status'])) { ?>
+              class="disabled"
+          <?php
+            }else if($usrpm['app_id']==10) {
+          ?>
+              class="active"
+          <?php
+            }
+          ?>
+           >
+            <a style="color: #333; font-size: 20px; margin-bottom: 50px;" target="_blank" href="<?php echo site_url('report/A4');?>"><i class="fa fa-print" aria-hidden="true"></i> <?php if(isset($tmp1['perm_status'])) {echo $tmp1['app_name']; }?>
+            </a>
+          </div>
+
+         </div>
+         <br/>
+
+      </div>
+    </div>
+
+  </div>
+ </div>
+ <!-- End Print Modal -->

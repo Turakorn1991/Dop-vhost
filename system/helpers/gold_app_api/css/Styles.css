@@ -1,0 +1,15 @@
+@font-face {
+    font-family: THSarabun;
+    src: url('../fonts/thsarabun.woff2') format('woff2'), /* Super Modern Browsers */
+    url('../fonts/thsarabun.woff') format('woff'), /* Pretty Modern Browsers */
+    url('../fonts/thsarabun.ttf') format('truetype'), /* Safari, Android, iOS */
+    url('../fonts/thsarabun.eot') format('eot'), url('../Font/thsarabun.svg') format('svg');
+}
+
+title, body, h1, h2, h3, h4, h5, h6, p, a, pre, b, strong, i, em, mark, small, del, ins, sub, sup, form, table, ul, ol, q, blockquote, abbr, address, cite, bdo, text, textarea, label {
+    font-family: THSarabun !important;
+}
+
+html{
+    font-family: THSarabun !important;
+}

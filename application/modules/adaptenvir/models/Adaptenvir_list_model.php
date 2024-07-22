@@ -1,0 +1,172 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Adaptenvir_list_model extends CI_Model {
+
+	var $table = 'impv_home_info as A';
+	//var $column_order = array('B.pid','C.prename_th','name','B.date_of_birth','A.date_of_req','A.date_of_visit','A.date_of_pay'); //set column field database for datatable orderable
+
+	var $column_search = array(); //set column field database for datatable searchable
+
+	var $order = array('A.insert_datetime' => 'DESC','A.update_datetime','DESC'); // default order
+
+	public function __construct()
+	{
+		parent::__construct();
+		$this->load->database();
+	}
+
+	private function _get_datatables_query()
+	{
+		$whereGoalApp = " ";
+		$org_id_current = get_session('org_id');
+		if(isset($org_id_current)){
+            $provineCodeWhere = $this->admin_model->MapOrgIdToProvinceCode($org_id_current);
+			if($provineCodeWhere != "" && $provineCodeWhere != null){
+				$whereGoalApp = " OR (AA.insert_org_id = 174 AND HH.addr_province = ".$provineCodeWhere." AND (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL)) ";
+			}
+		}
+
+		$user_id = get_session('user_id');
+		$app_id = 28;
+		$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id,$user_id);
+
+
+		$tableMain = "";
+		$whereByRole = "";
+		if($usrpm['perm_view']=='All'){
+			$tableMain = "(select AA.* from impv_home_info as AA where (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL))";
+		}
+		else if($usrpm['perm_view']=='Organization')
+		{
+			$tableMain = "(select AA.* from impv_home_info as AA 
+						  left join pers_info as BB on AA.pers_id = BB.pers_id
+			              left join pers_addr as HH on BB.pre_addr_id = HH.addr_id
+			              where (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL)
+						  AND AA.insert_org_id = ".get_session('org_id').$whereGoalApp.")";
+        }
+		else if($usrpm['perm_view']=='Person'){
+			$tableMain = "(select AA.* from impv_home_info as AA where (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL) AND AA.insert_user_id =".get_session('user_id')." )";
+		}
+
+
+		$this->db->select("A.*");
+		$this->db->from($tableMain." as A");
+
+		$this->db->join('pers_info as B', 'A.pers_id=B.pers_id', 'left');
+		//$this->db->join('std_prename as C', 'B.pren_code=C.pren_code', 'left');
+		$this->db->join('std_gender as D', 'B.gender_code=D.gender_code', 'left');
+		$this->db->join('usrm_org as I','A.insert_org_id=I.org_id','left');
+		//$this->db->join('impv_home_info as H', 'B.pers_id=H.pers_id', 'left');
+		// $this->db->join('pers_addr as AD', 'B.pre_addr_id=AD.addr_id', 'left');
+		$this->db->where("(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
+		
+
+		// if($usrpm['perm_view']=='All'){//เห็นข้อมูลทั้งหมด
+		// 	$this->db->where("(A.delete_user_id IS NULL AND A.delete_datetime IS NULL) AND
+		// 	(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
+		// }else if($usrpm['perm_view']=='Organization'){//เห็นข้อมูลเฉพาะองค์กรของตนเองเท่านั้น
+		// 		$this->db->where("(A.delete_user_id IS NULL AND A.delete_datetime IS NULL) AND
+		// 			(B.delete_user_id IS NULL AND B.delete_datetime IS NULL) AND A.insert_org_id=".get_session('org_id'));
+		// }else if($usrpm['perm_view']=='Person'){//เห็นข้อมูลเฉพาะของตนเองเท่านั้น
+		// 		$this->db->where("(A.delete_user_id IS NULL AND A.delete_datetime IS NULL) AND
+		// 			(B.delete_user_id IS NULL AND B.delete_datetime IS NULL) AND A.insert_user_id=".get_session('user_id'));
+		// }
+
+		// dieArray($_POST);
+		foreach ($_POST['columns'] as $colId => $col) {
+			if($col['search']['value'] != '') // if datatable send POST for search
+			{
+					$arr = @explode('_', $col['search']['value']);		
+					if(count($arr) >= 2){
+						$this->db->where("(".$col['name']." BETWEEN '".dateChange($arr[0],0)."' AND '".dateChange($arr[1],0)."')");	
+					}
+					else if($col['search']['value']=='*'){
+						
+						$this->db->where($col['name'].' IS NOT NULL');
+					}
+					else if($col['name']=='D.gender_name'){
+						  $this->db->where('D.gender_code',$col['search']['value']);
+					}
+					else if($col['name'] == 'start_age' ){
+						$year_age   = $col['search']['value'];
+						$this->db->where("(IF(TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE()) IS NULL,0,TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE())) >= ".$year_age.")");
+					}
+					else if($col['name'] == 'end_age' ){
+						$year_age   = $col['search']['value'];
+						$this->db->where("(IF(TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE()) IS NULL,0,TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE())) <= ".$year_age.")");
+					}
+					else if($col['name']=='I.org_title'){
+						$this->db->where('A.insert_org_id',$col['search']['value']);
+					}
+					// else if($col['name'] == 'H.date_of_svy' ){
+				
+					// 	list($start,$end)   				= explode("_",$col['search']['value']);
+					// 	list($str_day,$str_month,$str_year) = explode("/",$start);
+					// 	list($en_day,$en_month,$en_year) 	= explode("/",$end);
+					// 	$start_year 						= ((int)$str_year-543)."/".$str_month."/".$str_day;
+					// 	$end_year							= ((int)$en_year-543)."/".$en_month."/".$en_day;
+					// 	$this->db->where("(H.date_of_svy BETWEEN '".$start_year."' AND '".$end_year."')");
+					// }
+					// else if($col['name'] == 'H.date_of_consi' ){
+					
+					// 	list($start,$end)   				= explode("_",$col['search']['value']);
+					// 	list($str_day,$str_month,$str_year) = explode("/",$start);
+					// 	list($en_day,$en_month,$en_year) 	= explode("/",$end);
+					// 	$start_year 						= ((int)$str_year-543)."/".$str_month."/".$str_day;
+					// 	$end_year							= ((int)$en_year-543)."/".$en_month."/".$en_day;
+					// 	$this->db->where("(H.date_of_consi BETWEEN '".$start_year."' AND '".$end_year."')");
+					// }
+					// else if($col['name'] == 'H.date_of_finish' ){
+					
+					// 	list($start,$end)   				= explode("_",$col['search']['value']);
+					// 	list($str_day,$str_month,$str_year) = explode("/",$start);
+					// 	list($en_day,$en_month,$en_year) 	= explode("/",$end);
+					// 	$start_year 						= ((int)$str_year-543)."/".$str_month."/".$str_day;
+					// 	$end_year							= ((int)$en_year-543)."/".$en_month."/".$en_day;
+					// 	$this->db->where("(H.date_of_finish BETWEEN '".$start_year."' AND '".$end_year."')");
+					// }
+					else{
+						$this->db->like($col['name'], $col['search']['value']);
+					}
+			}
+		}
+
+		if(isset($this->order))
+		{
+			$order = $this->order;
+			$this->db->order_by(key($order), $order[key($order)]);
+		}
+	}
+
+	function get_datatables()
+	{
+		$this->_get_datatables_query();
+		if($_POST['length'] != -1){
+			$this->db->limit($_POST['length'], $_POST['start']);
+		}
+		//$this->db->where("log_type =",'Import');// เพิ่ม where log_type = Import
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+	function count_filtered()
+	{
+		$this->_get_datatables_query();
+		//$this->db->where("log_type =",'Import');// เพิ่ม where log_type = Import
+	
+		$query = $this->db->get();
+
+		set_session('last_sql_filtered',$this->db->last_query()); //
+
+		return $query->num_rows();
+	}
+
+	public function count_all()
+	{
+		$this->db->from($this->table);
+		//$this->db->where("log_type =",'Import');// เพิ่ม where log_type = Import
+		return $this->db->count_all_results();
+	}
+
+}

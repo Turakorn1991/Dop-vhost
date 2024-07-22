@@ -1,0 +1,172 @@
+/* Table Summary */
+.summary-title{
+  font-size: 16px;
+  color: #000;
+}
+.summary-title-sub{
+  font-size: 16px;
+  color: #888;
+}
+.center{
+  text-align: center;
+}
+.left{
+  text-align: left;
+}
+.right{
+  text-align:right;
+}
+.summary-report-table{
+  border-radius: 5px !important;
+  border: 1px solid #BBB !important;
+}
+.summary-report-th{
+  background-color: #2f4050 !important;
+  text-align: center !important;
+  border: 1px solid #BBB !important;
+  color: #FFF;
+  padding: 5px;
+  font-size: 16px;
+  font-weight: 100 !important;
+}
+.summary-report-td{
+  font-size: 16px;
+  background-color: #ffffff !important;
+  border: 1px solid #BBB !important;
+  font-weight: 100 !important;
+  padding: 5px;
+  color: #333;
+}
+.summary-report-td-sum{
+  background-color: #f5f5f5 !important;
+  border: 1px solid #BBB !important;
+  color: #333;
+  padding: 5px;
+  font-size: 16px;
+}
+
+/* Tabs Summary */
+/* Tabs Summary */
+.tabs-page-container {
+  border:1px solid #CCC;
+  margin-bottom: 10px;
+  -webkit-border-radius: 5px !important;
+  -moz-border-radius: 5px !important;
+  webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+
+}
+.tabs-page-container .panel-body {
+  background: #fff;
+  border: 0px solid #e7eaec;
+  border-radius: 2px;
+  padding: 0px;
+  position: relative;
+  margin: 2px;
+}
+.tabs-page-container .nav-tabs > li {
+  float: left;
+  border: 1px solid #FFF;
+  background-color: #BBB;
+  border-radius: 15px;
+  width: 18px !important;
+  height: 18px;
+  margin-right: 5px;
+  margin-top: 6px;
+  margin-bottom: 5px;
+}
+.tabs-page-container .tab-pane .panel-body {
+  border-top: none;
+  margin: 0px;
+}
+.tabs-page-container .nav-tabs {
+
+  border-bottom: none;
+}
+.tabs-page-container .tab-pane .panel-body {
+  border-top: none;
+  margin: 0px;
+}
+.tabs-page-container .tabs-left .tab-pane .panel-body,
+.tabs-page-container .tabs-right .tab-pane .panel-body {
+  border-top: 0px solid #e7eaec;
+}
+.tabs-page-container .nav-tabs > li a:hover {
+  border: 0px solid #0000ff;
+  background: transparent;
+  border-color: transparent;
+  width: 15px !important;
+}
+.tabs-page-container > ul.nav-tabs{
+  position: absolute;
+  top: 15px;
+  right: 30px;
+  z-index: 1;
+}
+.tabs-page-container > ul.nav-tabs > li a{
+  background: transparent !important;
+  padding: 0px !important;
+  width: 15px !important;
+
+}
+.tabs-page-container > ul.nav-tabs > li.active a{
+  padding: 0px !important;
+  margin: 0px !important;
+  border: 0px solid #00ff00 !important;
+}
+.tabs-page-container .tabs-below > .nav-tabs,
+.tabs-page-container .tabs-right > .nav-tabs,
+.tabs-page-container .tabs-left > .nav-tabs {
+  border-bottom: 0;
+}
+.tabs-page-container .tabs-left .panel-body {
+  position: static;
+}
+.tabs-page-container .tabs-left > .nav-tabs,
+.tabs-page-container .tabs-right > .nav-tabs {
+  width: 25px !important;
+}
+.tabs-page-container .tabs-left .panel-body {
+  width: 100%;
+}
+.tabs-page-container .tabs-right .panel-body {
+  width: 100%;
+}
+.tabs-page-container .tab-content > .tab-pane,
+.tabs-page-container .pill-content > .pill-pane {
+  display: none;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-bottom: 10px;
+  border: 0px solid #FF0000 !important;
+}
+.tabs-page-container .tab-content > .active,
+.tabs-page-container .pill-content > .active {
+  display: block;
+  margin-top: 8px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-bottom: 15px;
+  padding: 0px;
+  border: 0px solid #FF0000 !important;
+}
+.tabs-page-container .tabs-below > .nav-tabs {
+  border-top: 0px solid #e7eaec;
+}
+.tabs-page-container .tabs-below > .nav-tabs > li > a:hover,
+.tabs-page-container .tabs-below > .nav-tabs > li > a:focus {
+  border-top-color: #e7eaec;
+  border-bottom-color: transparent;
+}
+.tabs-page-container > .nav-tabs .active > a,
+.tabs-page-container > .nav-tabs .active > a:hover,
+.tabs-page-container > .nav-tabs .active > a:focus {
+  background-color:#000 !important;
+  border-radius: 15px;
+  width: 16px !important;
+  height: 16px !important;
+}
+.tabs-page-container .tabs-right > .nav-tabs {
+  float: right;
+  margin-left: 0px !important;
+}

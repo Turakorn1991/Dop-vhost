@@ -1,0 +1,500 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Info extends MX_Controller {
+	private $token = "";
+	private $user_id;
+	private $app_id;
+	private $process_action;
+	private $usrpm;
+
+	function __construct() {
+		parent::__construct();
+		
+		$exceptAuth = ['clear_cache', 'check_volt_duplicate'];
+		$method_name = $this->uri->segment(3);
+		
+		if(!in_array($method_name, $exceptAuth)){
+
+			chkUserLogin();
+
+			$this->user_id = get_session('user_id');
+			$this->app_id = 52; //Fix for dev.
+
+			if($method_name == 'index' || $method_name == '' ){
+				$this->process_action = 'View';
+
+			}else if($method_name == 'create'){
+				$this->process_action = 'Add';
+
+			}else if( $method_name == 'store' && is_empty($this->input->post('volt_info[volt_id]')) ){
+				$this->process_action = 'Added';
+
+			}else if($method_name == 'edit'){
+				$this->process_action = 'Edit';
+
+			}else if($method_name == 'store' && !is_empty($this->input->post('volt_info[volt_id]')) ){
+				$this->process_action = 'Edited';
+			}
+
+			$this->webinfo_model->LogSave($this->app_id,$this->process_action,'Sign In','Success'); //Save Sign In Log
+			$this->usrpm = $this->admin_model->chkOnce_usrmPermiss($this->app_id,$this->user_id); //Check User Permission
+
+			//Check permission
+			if(!isset($this->usrpm['app_id']) || $this->usrpm['perm_status']=='No'){
+				$this->webinfo_model->LogSave($this->app_id,$this->process_action,'Sign Out','Fail'); //Save Sign In Log
+				page500();
+				die;
+			}
+
+			$this->load->library('template',
+			array(  
+					'name'=>'admin_template1',
+					'setting'=>array('data_output'=>'')
+				)
+			); // Set Template
+			
+			$this->load->library([
+				'PHPRequests' => 'PHPRequests'
+			]);
+		}
+	}
+
+	function __deconstruct() {
+		$this->db->close();
+	}
+
+	public function create(){		
+		$data = $this->init_viewDataAndStylingAssets();
+		$data = $this->merge_blankVolunteerData($data);
+		$data['provinces'] = $this->personal_model->getAll_Province();
+		// $data['provinces'] = [];
+		$data['edu_levels'] = $this->personal_model->getAll_edu_level();
+		$data['village_positions'] = $this->get_village_position();
+		$user_id = get_session('user_id');
+		$data['token_id'] = $this->common_model->getToken($user_id);
+		
+    	$this->template->load('index_page_module_heading_blank',$data,'volunteer');
+	}
+
+	public function edit($id = 0){
+		$volunteer_id = $id;
+		$user_id = get_session('user_id');
+		$data = $this->init_viewDataAndStylingAssets();
+		$volt_info = $this->volunteer_model->get_id($volunteer_id);
+		$data['token_id'] = $this->common_model->getToken($user_id);
+		
+		if(count($volt_info) != 0){
+			$data['volt_info'] = $volt_info;
+			$data['pers_info'] = $this->personal_model->getOnce_PersonalInfo($volt_info['pers_id']);
+
+			$data['reg_addr'] = $this->personal_model->getOnce_PersonalAddress($data['pers_info']['reg_addr_id']);
+			$data['edu_levels'] = $this->personal_model->getAll_edu_level();
+			$data['village_positions'] = $this->get_village_position();
+			$data['provinces'] = $this->personal_model->getAll_Province();
+			// $data['provinces'] = [];
+
+			$village_position = $this->volunteer_model->get_village_position($volunteer_id);
+      		$data['volt_info_village_position'] = sort_array_with($village_position,'vpos_code');
+      		$data['volt_info_training'] = $this->volunteer_model->get_training($volunteer_id);
+			
+			  
+			// $addr_diff_info = $this->common_model->get_where_custom('pers_addr','addr_id',$data['pers_info']['reg_addr_id']);
+			// $data['addr_diff_info'] = $addr_diff_info[0]; ///addr1
+
+			$req_addr_diff_info = $this->common_model->get_where_custom('pers_addr','addr_id',$data['pers_info']['pre_addr_id']);
+			$data['addr_pers_info'] = $req_addr_diff_info[0]; ///addr2
+			
+			$data['pers_info']['reg_add_info'] = @"{$data['reg_addr']['addr_home_no']} หมู่ {$data['reg_addr']['addr_moo']} ต. {$data['reg_addr']['addr_sub_district']} อ. {$data['reg_addr']['addr_district']} จ. {$data['reg_addr']['addr_province']} {$data['reg_addr']['addr_zipcode']}";
+			$pers_info = $data['pers_info'];
+			$data['pers_info']['date_of_birth_num'] = $pers_info['date_of_birth'];			
+			if($pers_info['date_of_birth']!='' && checkdate(iconv_substr($pers_info['date_of_birth'],5,2,'utf-8'),iconv_substr($pers_info['date_of_birth'],8,2,'utf-8'),iconv_substr($pers_info['date_of_birth'],0,4,'utf-8'))) {
+				$date = new DateTime($pers_info['date_of_birth']);
+				$now = new DateTime();
+				$interval = $now->diff($date);
+				$age = $interval->y;
+				$data['pers_info']['age'] = $age;
+				$data['pers_info']['date_of_birth'] = formatDateThai($pers_info['date_of_birth']).' (อายุ '.$age.' ปี)';
+			}
+			else if($pers_info['date_of_birth']!='' && iconv_substr($pers_info['date_of_birth'],5,2,'utf-8')!= ''){
+				$birthdate = iconv_substr($pers_info['date_of_birth'],0,4,'utf-8')+543; 
+				$date = new DateTime($pers_info['date_of_birth']);
+				$now = new DateTime();
+				$interval = $now->diff($date);
+				$age = $interval->y;
+				$data['pers_info']['age'] = $age;
+				$data['pers_info']['date_of_birth'] = "วัน - เดือน - พ.ศ. ".$birthdate." (อายุ ".$age." ปี)";
+			}
+			else {
+				$data['pers_info']['date_of_birth'] = ' - ';
+			}
+			//Section Data Address
+			if( $data['pers_info']['pre_addr_id'] != 0 && !is_null( $data['pers_info']['pre_addr_id'] )){ 
+
+				if($data['pers_info']['reg_addr_id'] != $data['pers_info']['pre_addr_id']){ //Case Present address != Register address
+        			$data['pers_addr'] = $this->personal_model->getOnce_PersonalAddress($data['pers_info']['pre_addr_id']);
+        			// print_r($data['pers_addr']);die;
+
+				}
+        		
+			}else{ //Case else for check insert address not working!.
+      			echo 'Error : Data address missing!';die;
+      		}
+
+			$this->template->load('index_page_module_heading_blank',$data,'volunteer');
+
+		}else {
+      		// no volunteer data
+      		page500();
+      		$this->webinfo_model->LogSave($this->app_id, $this->process_action, 'Sign Out', 'Fail'); //Save Sign Out Log
+    	}
+	}
+
+	public function store(){
+		
+		if($this->config->item('app_env') != 'production' && $this->process_action == 'Added' ){
+			$pers_id = rand(1 ,100); //Random id for dev
+
+		}else{ //Case production
+			$pers_id = get_inpost('volt_info[pers_id]');
+		}
+
+		$volunteer_id = get_inpost('volt_info[volt_id]');
+		// print_r( get_inpost_arr('pers_addr') );die;
+
+		$volunteer_id = $this->handle_volunteerInfo($pers_id, $volunteer_id);
+		$this->handle_volunteerPersanalInfo($pers_id,$volunteer_id); //volt_addr_chk
+		$this->handle_volunteerVillagePositions($volunteer_id);
+		$this->handle_volunteerTrainings($volunteer_id , $this->process_action);
+		// echo $volunteer_id;
+		// echo ' : OK';
+		redirect('volunteer/elderly_care/edit/'.$volunteer_id,'refresh');
+
+	}
+
+	public function check_volt_duplicate(){
+		
+		$pers_id = get_inpost('pers_id');
+		$volt_info = $this->volunteer_model->get_pers_id($pers_id);
+
+		if(count($volt_info) != 0){
+			
+			echo json_encode( ['is_duplicate' => 1] );
+		}else{
+        	
+			echo json_encode( ['is_duplicate' => 0] );
+
+
+		}
+	}
+
+	public function clear_cache() {
+		$this->volunteer_model->clear_cache();
+		echo 'cache is cleared';
+	}
+
+	private function handle_volunteerInfo( $pers_id = NULL , $volunteer_id = NULL ) {
+
+		$data_update = get_inpost_arr('volt_info');
+		$data_update['date_of_reg']	= dateChange($data_update['date_of_reg']);
+		$data_update['date_of_resign']	= dateChange($data_update['date_of_resign']);
+		$data_update['update_user_id'] 	= getUser();
+		$data_update['update_datetime']	= getDatetime();
+		$data_update['update_org_id'] 	= get_session("org_id");
+
+		if ($volunteer_id != '') {
+			$this->common_model->update('volt_info',$data_update,array('volt_id'=>$volunteer_id));
+			return $volunteer_id;
+
+		} else{
+			$data_update['insert_user_id'] 	= getUser();
+			$data_update['insert_datetime']	= getDatetime();
+			$data_update['insert_org_id'] 	= get_session("org_id");
+
+			$data_update['pers_id'] 	= $pers_id;
+
+			return $this->common_model->insert('volt_info', $data_update);
+
+		}
+	}
+
+	private function handle_volunteerPersanalInfo($pers_id,$volunteer_id) {
+		// $data_update['insert_user_id'] 	= getUser();
+		// 	$data_update['insert_org_id']   = get_session("org_id");
+		// 	$data_update['insert_datetime'] = getDatetime();
+
+		// 	//unset($data_update['pid']);
+
+		// 	$id = $this->common_model->insert('volt_info',$data_update);
+		// 	// $id = 1;
+	//	print_r(get_inpost('volt_info[pers_id]'));exit(); //20389139
+		$info_insert = array();
+		$info_insert = get_inpost_arr("impv_info");
+		$info_insert['pid']	= get_inpost('impv_pid[pid]');
+		
+		$volt_info_id = get_inpost('volt_info[pers_id]');
+		if($volt_info_id != ""){
+			$this->common_model->update('pers_info',$info_insert,array('pers_id'=>$volt_info_id));
+	
+		}else{
+			$info_id = $this->common_model->insert('pers_info',$info_insert);		
+			$data_home_info['pers_id']		= $info_id;	
+			$this->common_model->update('volt_info',$data_home_info,array('volt_id'=>$volunteer_id));
+		}	
+		//print_r($data_home_info);exit();
+							
+		
+		$req_pers_info2 = $this->common_model->get_where_custom('pers_info','pers_id',$pers_id);
+		$req_addr_info2 = $req_pers_info2[0];
+		
+		// $req_pers_info = $this->common_model->get_where_custom('pers_info','pers_id',$row['req_pers_id']);
+		// $req_addr_info = $req_pers_info[0];
+	//	[reg_addr_id] => 25971897 [pre_addr_id]
+	//	print_r($req_addr_info2['reg_addr_id']);exit();
+		$pers_info = get_inpost_arr('pers_info');
+
+		// update person's new address
+		$pers_update = array();
+		///////////////////////reg_addr///////////////////////////////
+		$data_addr = get_inpost_arr('impv_addr');
+		$data_addr['insert_user_id']		= getUser();
+		$data_addr['insert_datetime']	= getDatetime();
+		$data_addr['insert_org_id'] 		= get_session('org_id');
+		
+		if ($req_addr_info2['reg_addr_id'] != '') { //25971903
+			$this->common_model->update('pers_addr',$data_addr,array('addr_id'=>$req_addr_info2['reg_addr_id']));
+		} else{
+			$new_data_id = $this->common_model->insert('pers_addr',$data_addr);
+			$pers_update['reg_addr_id'] = $new_data_id;
+		}
+		
+		if (get_inpost('volt_addr_chk') != 'on'){ // use same address ==
+			//$pers_update['pre_addr_id']     = $this->input->post('reg_addr_id');
+			//add new addr
+			$data_insert_addr = get_inpost_arr('pers_addr');
+			$data_update_addr['addr_home_no']		= get_inpost('pers_addr[addr_home_no]'); 						
+			$data_insert_addr['insert_user_id']		= getUser();
+			$data_insert_addr['insert_datetime']	= getDatetime();
+			$data_insert_addr['insert_org_id'] 		= get_session('org_id');
+			
+			if ($req_addr_info2['pre_addr_id'] != '') {
+				$this->common_model->update('pers_addr',$data_insert_addr,array('addr_id'=>$req_addr_info2['pre_addr_id']));
+			} else{
+				$new_addr_id = $this->common_model->insert('pers_addr',$data_insert_addr);
+				$pers_update['pre_addr_id'] = $new_addr_id;		
+			}	
+			// $pers_update['reg_addr_id'] = $new_data_id;
+		}else{ //insert/update == new record  !=
+			// // insert new address
+			// $addr_insert = get_inpost_arr('pers_addr');
+			// $addr_insert['insert_user_id']  = getUser();
+			// $addr_insert['insert_datetime'] = getDatetime();
+			// $addr_insert['insert_org_id']   = get_session("org_id");
+			// $addr_id = $this->common_model->insert('pers_addr', $addr_insert);
+			// $pers_update['pre_addr_id']     = $addr_id;
+		//	if($_POST['pre_addr_id'] != ""){  ///ดึงข้อมูลหน้าบัตร
+				$data_insert_addr = get_inpost_arr('pers_addr');
+				// $house_no =   get_inpost('pers_addr[addr_moo]'); 
+				// $houseNo = str_replace("หมู่ที่ ", "", $house_no);
+				$data_insert_addr['addr_home_no']		= get_inpost('addr_home_id'); 
+				$data_insert_addr['addr_moo']		= get_inpost('addr_moo_id');  /// $houseNo; 
+				$data_insert_addr['addr_alley']		= get_inpost('pers_addr[addr_alley]'); 
+				$data_insert_addr['addr_lane']		= get_inpost('pers_addr[addr_lane]');
+				$data_insert_addr['addr_road']		= get_inpost('pers_addr[addr_road]');
+
+				$data_insert_addr['insert_user_id']		= getUser();
+				$data_insert_addr['insert_datetime']	= getDatetime();
+				$data_insert_addr['insert_org_id'] 		= get_session('org_id');
+				//print_r($data_insert_addr);exit();
+				//pers_info['pre_addr_id'];
+				// $new_addr_id = $this->common_model->insert('pers_addr',$data_insert_addr);
+				// $pers_update['pre_addr_id'] = $new_addr_id;
+
+				if ($req_addr_info2['pre_addr_id'] != '') {
+					$this->common_model->update('pers_addr',$data_insert_addr,array('addr_id'=>$req_addr_info2['pre_addr_id']));
+				} else{
+					$new_addr_id = $this->common_model->insert('pers_addr',$data_insert_addr);
+					$pers_update['pre_addr_id'] = $new_addr_id;		
+				}
+
+				// $pers_update['reg_addr_id'] = $new_addr_id;
+			
+			// }else{
+			// 	$pers_update['reg_addr_id'] = $pers_update['reg_addr_id'];
+			// }
+		}
+		// exit();
+		
+		//print_r($info_id);exit(); //20389037
+		$pers_update['tel_no_home'] 	= $pers_info['tel_no_home'];
+		$pers_update['edu_code'] 	= $pers_info['edu_code'];
+		$pers_update['occupation'] 	= $pers_info['occupation'];
+
+		$pers_update['update_user_id'] 	= getUser();
+		$pers_update['update_org_id'] 	= get_session('org_id');
+		$pers_update['update_datetime'] = getDatetime();
+		
+		$this->common_model->update('pers_info', $pers_update, array('pers_id'=> $info_id ));
+	}
+
+	private function handle_volunteerTrainings($volunteer_id, $mode = 'Added') {
+		$tmp_training_info = get_inpost_arr('training[date_of_training]');
+		if(!is_empty($tmp_training_info) && get_inpost('volt_info[older_care_training]') == 'เคยได้รับการอบรม'){
+
+			foreach ($tmp_training_info as $key => $value ) {
+				$training_update = array(
+					'volt_id'                    => $volunteer_id,
+					'date_of_training'           => dateChange(get_inpost('training[date_of_training]['.$key.']')),
+					'older_care_training_org'    => get_inpost('training[older_care_training_org]['.$key.']'),
+					'older_care_training_course' => get_inpost('training[older_care_training_course]['.$key.']')
+				);
+
+				if ($mode=='Edited' && get_inpost('training[train_id]['.$key.']')!='')
+					$this->common_model->update('volt_info_training', $training_update, array('train_id'=>get_inpost('training[train_id]['.$key.']')));
+				else
+					$this->common_model->insert('volt_info_training', $training_update);
+
+			}
+		}else{
+			// delete all old volt_info_training
+			$this->common_model->delete_where('volt_info_training','volt_id',$volunteer_id);
+		}
+		
+	}
+
+	private function handle_volunteerVillagePositions($volunteer_id) {
+		$tmp_position = get_inpost_arr('volt_info_village_position[vpos_code]');
+		if (is_empty($tmp_position)) // no data
+		  return;
+		// delete all old positions
+		$this->common_model->delete_where('volt_info_village_position','volt_id',$volunteer_id);
+		// insert current positions
+		foreach ($tmp_position as $row)
+		  $this->common_model->insert('volt_info_village_position', array(
+		    'volt_id'				=> $volunteer_id,
+		    'vpos_code'		  => $row,
+		    'vpos_identify' => get_inpost("volt_info_village_position[vpos_identify][{$row}]")
+		  ));
+	}
+
+	private function init_viewDataAndStylingAssets() {
+
+		/*-- datepicker custom --*/
+		// set_css_asset_head('../plugins/bootstrap-datepicker-custom/dist/css/bootstrap-datepicker.css');
+		// set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-custom.js');
+		// set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/locales/bootstrap-datepicker.th.min.js');
+		set_css_asset_head('../plugins/bootstrap-datepicker1.9.0/css/bootstrap-datepicker.css');
+		set_js_asset_head('../plugins/bootstrap-datepicker1.9.0/js/bootstrap-datepicker.js');
+		set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-BE.js');
+	
+		/*-- End datepicker custom--*/
+
+		/*-- Toastr style --*/
+		set_css_asset_head('../plugins/Static_Full_Version/css/plugins/toastr/toastr.min.css');
+		set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/toastr/toastr.min.js');
+		/*-- End Toastr style --*/
+
+		/*-- select2 style --*/
+		set_css_asset_head('../plugins/Static_Full_Version/css/plugins/select2/select2.min.css');
+		set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/select2/select2.full.min.js');
+		/*-- End select2 style --*/
+
+		set_js_asset_footer('mapmarker.js','webconfig'); //Set JS mapmarker.js --
+		set_js_asset_footer('webservice.js','personals'); //Set JS sufferer_form1.js
+		set_js_asset_footer('volunteer_info.js','volunteer'); //Set JS volunteer_info.js
+
+		$data = array();
+		$data['usrpm'] = $this->usrpm;
+		$data['user_id'] = $this->user_id;
+		$data['process_action'] = $this->process_action;
+		$data['content_heading'] = 'partial/_menu_tab_list_page';
+		$data['content_view'] 	= 'form_info';
+		$data['localAdmins'] = $this->volunteer_model->get_cachedLAOrg();
+
+		$tmp = $this->admin_model->getOnce_Application($this->usrpm['app_parent_id']); //Used for find root application
+
+		$data['head_title'] 	= $tmp['app_name'];
+		$data['title'] 			= $this->usrpm['app_name'];
+
+		$data['csrf'] = array(
+			'name' => $this->security->get_csrf_token_name(),
+			'hash' => $this->security->get_csrf_hash()
+		);
+	    return $data;
+	}
+
+	private function get_village_position(){
+		$village_position = '{
+			"001" : "กรรมการหมู่บ้าน/สภา/ตำบล",
+			"002" : "กรรมการกองทุนหมู่บ้าน",
+			"003" : "ชมรม/สมาคม/มูลนิธิ",
+			"004" : "อาสาสมัครสาธารณสุขประจำหมู่บ้าน (อสม.)",
+			"005" : "อาสาสมัครพัฒนาสังคมและความมั่นคงของมนุษย์ (อพม.)",
+			"009" : "อื่น ฯ"
+		}';
+
+		return json_decode($village_position , true);
+	}
+
+	private function merge_blankVolunteerData($data) {
+		$data['volt_info'] = array(
+		  'volt_id' => '',
+		  'pers_id'						           => '',
+		  'date_of_reg'					         => date('Y-m-d'),
+		  'older_care_training'			     => 'ไม่เคยได้รับการอบรม',
+		  'older_care_training_identify' => '',
+		  'date_of_training'				     => '',
+		  'older_care_training_org'		   => '',
+		  'older_care_training_course'	 => '',
+		  'date_of_resign' => ''
+		);
+
+		//reg_addr == reg_addr_id
+		//Register address
+		$data['reg_addr'] = array(
+		  'addr_home_no' 			=> '',
+		  'addr_moo' 					=> '',
+		  'addr_sub_district' => '',
+		  'addr_district' 	  => '',
+		  'addr_province' 	  => '',
+		  'addr_zipcode' 			=> '',
+		  'addr_gps'          => '',
+		);
+
+		//pre_addr
+		$data['pers_addr'] = array(
+			'addr_gps' => '',
+			'addr_home_no' => '',
+			'addr_moo' => '',
+			'addr_alley' => '',
+			'addr_lane' => '',
+			'addr_road' => '',
+			'addr_province' => '',
+			'addr_district' => '',
+			'addr_sub_district' => '',
+			'addr_zipcode' => ''
+		);
+
+		$data['pers_info'] = array(
+		  'pid' 					 => '',
+		  'pers_id' 			 => '',
+		  'name' 				   => ' - ',
+		  'date_of_birth'  => ' - ',
+		  'gender_name'		 => ' - ',
+		  'nation_name_th' => ' - ',
+		  'relg_title' 		 => ' - ',
+		  'tel_no_home' 	 => '',
+		  'tel_no_mobile'  => '',
+		  'fax_no'				 => '',
+		  'email_addr' 		 => '',
+		  'reg_addr_id' 	 => '',
+		  'pre_addr_id' 	 => ''
+		);
+		$data['process_action'] = 'Add';
+		return $data;
+	}
+
+
+
+}
+?>

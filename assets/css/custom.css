@@ -1,0 +1,255 @@
+@font-face {
+  font-family: 'SukhumvitSet';
+  src: url("../fonts/SukhumvitSet/SukhumvitSet-Text.otf");
+  src: url("../fonts/SukhumvitSet/SukhumvitSet-Text.eot") format("embedded-opentype"), url("../fonts/SukhumvitSet/SukhumvitSet-Text.woff") format("woff"), url("../fonts/SukhumvitSet/SukhumvitSet-Text.woff2") format("woff2"), url("../fonts/SukhumvitSet/SukhumvitSet-Text.ttf") format("truetype"), url("../fonts/SukhumvitSet/SukhumvitSet-Text.svg#SukhumvitSet") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, .landing-page .navbar-default .nav li a{
+	font-family: SukhumvitSet;
+}
+
+html {
+	overflow-x: hidden;
+}
+
+.landing-page {
+	padding-top: 72px;
+}
+
+.nav > li > a {
+    padding: 15px 15px;
+}
+
+#footer {
+	padding-top: 20px;
+    padding-bottom: 10px;
+}
+
+.landing-page .services {
+    padding-top: 0px;
+}
+
+.bg-container {
+    background-color: #FFF;
+}
+
+.bg-containerblack {
+	background-color: #000;
+}
+
+#footer .copy {
+	color : #99FF00;
+}
+
+.standard {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	background-color: rgba(192,192,192,0.3);
+}
+
+.landing-page .navbar-wrapper {
+	margin-top: 0;
+}
+
+.landing-page .navbar-wrapper .navbar {
+	padding-top: 0;
+	padding-bottom: 5px;
+	border-bottom: 1px solid #e7eaec;
+	border-radius: 0;
+	background: #FFF;
+}
+
+.landing-page .navbar-nav > li > a {
+	padding: 20px 10px;
+}
+
+.landing-page .navbar-default .navbar-brand {
+	background-color: transparent;
+}
+
+.landing-page .navbar-default .navbar-brand:hover, .landing-page .navbar-default .navbar-brand:focus {
+	background-color: transparent;
+}
+
+.landing-page .navbar-default .nav li a {
+	color : inherit;
+}
+
+.link-footer {
+	padding: 10px 0;
+}
+
+.static {
+	color : #FF9900;
+}
+
+.landing-page .comments-avatar i {
+	margin-right: 10px;
+	color: #FFF;
+}
+
+.landing-page .bubble {
+	border: 2px #676a6c solid;
+	border-radius: 4px;
+}
+
+.landing-page .bubble::after {
+	border-color: #676a6c transparent;
+}
+
+.landing-page .bubble p strong{
+	color : #676a6c;
+}
+
+.product-imitation.image-bg {
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+}
+
+.wrapper-content {
+	padding-left: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-top: 0px;
+}
+
+.linkAll {
+	color: #FFF;
+}
+
+#testimonials {
+	background-image: url("../uploads/images/BKC8Y8VF8K.jpg");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	color: #FFF;
+}
+
+.product-imitation {
+	padding: 150px 0 0 0;
+	text-align: left;
+}
+
+.title-name-mews {
+	min-height: 70px;
+	background-color: rgba(6, 6, 10, 0.6);
+	text-indent: 15px;
+	padding: 5px;
+	color: #FFF;
+}
+
+#about-title {
+	padding-top: 100px;
+	padding-bottom: 100px;
+	background-image: url("../uploads/images/DLBQLIQXSF.jpg");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+#about-title p{
+	font-size: 36pt;
+	font-weight: 600;
+	color: #FFF;
+}
+
+.about {
+	padding-top: 50px;
+	padding-bottom: 50px;
+}
+
+#content-about #title{
+	font-size: 18pt;
+	text-indent: 25px;
+}
+
+.titletopic {
+	font-size: 28pt;
+	padding-top: 15px;
+	padding-bottom: 15px;
+	color: rgb(158,195,5);
+}
+
+.topic-news {
+	color: rgb(158,195,5) !important;
+	font-size: 13pt !important;
+	font-weight: 600;
+}
+
+.descript-news {
+	color: #666 !important;
+	font-size: 11pt !important;
+}
+
+.box-news {
+	margin-top: 5px;
+}
+
+#calendar-activity {
+	list-style-type: none;
+	padding: 10px 0 10px 0;
+}
+
+#calendar-activity li {
+	color: #666;
+	font-size: 11pt !important;
+}
+
+#calendar-activity li span{
+	color: rgb(158,195,5) !important;
+}
+
+.font16 {
+	font-size: 16pt !important;
+	color: #FFF !important;
+}
+
+.font16 a{
+	font-size: 16pt !important;
+	color: #FFF !important;
+}
+
+.font20 {
+	font-size: 20pt !important;
+	color: #FFF !important;
+}
+
+.font20 a{
+	font-size: 20pt !important;
+	color: #FFF !important;
+}
+
+.about-title {
+	font-size: 18pt !important;
+	color: rgb(158,195,5) !important;
+}
+
+.toppic-about {
+	font-size: 16pt !important;
+	color: rgb(158,195,5) !important;
+}
+
+.detail-about {
+	font-size: 13pt !important;
+	color: rgb(0,0,0) !important;
+	text-indent: 30px;
+}
+
+#content-service form .form-control {
+	border: 1px #999 solid;
+	border-radius: 4px;
+}
+
+#content-service form .form-control:focus {
+	border: 1px rgb(158,195,5) solid;
+}
+
+#content-service form label {
+	margin-top: 5px;
+	font-size: 11pt;
+}

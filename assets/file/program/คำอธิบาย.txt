@@ -1,0 +1,4 @@
+
+1.ติดตั้งโปรแกรม GovAMI_DOP-OLDER_Client.exe เพื่อดึงข้อมูลแบบ online
+
+2.ติดตั้งโปรแกรม Linkage Service.msiเพื่อดึงข้อมูลแบบ offline

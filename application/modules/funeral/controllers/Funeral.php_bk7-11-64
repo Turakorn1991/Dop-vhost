@@ -1,0 +1,1615 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Funeral extends MX_Controller {
+
+	function __construct() {
+		parent::__construct();
+
+		chkUserLogin();
+		$this->load->library([
+			'PHPRequests' => 'PHPRequests'
+		]);
+	}
+	function __deconstruct() {
+		$this->db->close();
+	}
+
+	//ลองทำจปฐ
+	public function getElderyJPTH($process_action='View') {
+		$data = array(); //Set Initial Variable to Views
+		/*-- Initial Data for Check User Permission --*/
+		$user_id = get_session('user_id');
+		$app_id = 3;
+		$process_path = 'difficult/getElderyJPTH';
+		/*--END Inizial Data for Check User Permission--*/
+	
+		$pers_id = get_inpost('pers_id');
+	
+		$this->webinfo_model->LogSave($app_id,$process_action,'Sign In','Success'); //Save Sign In Log
+		$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id,$user_id); //Check User Permission
+	
+		if(@$usrpm['perm_status']=='No' || !isset($usrpm['app_id'])){
+		  echo json_encode(array('code'=>'-1','message'=>'Permission Invalid!'));
+		  $this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+		}else {
+			$rows = $this->difficult_model->getQol($pers_id);
+			$rs = array();
+			if(count($rows)>0) {
+			  $rs['history'] = 'มีประวัติ';
+			}else {
+			  $rs['history'] = 'ไม่มีประวัติ';
+			}
+			
+			$rs['occupation'] = $rows['occupation'];
+			$rs['income'] = $rows['yearly_income_of_family'];
+			$rs['code'] = '0';
+			$rs['message'] = '';
+			//$rs = array();
+			//$rs['history'] = "Hello History";
+			echo json_encode($rs);
+	
+		  $this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+		}
+	  }
+	
+	public function send_sms($msisdn,$message,$id,$page){
+		$url = "https://thaibulksms.com/sms_api.php";
+		
+		 if(extension_loaded('curl')){
+	
+			$data = array(
+				'username' => "0954844125",
+				'password' => "954574",
+				'msisdn' => $msisdn,
+				'message' => $message,
+				'sender' => "SMS",//"กรมกิจการผู้สูงอายุ",
+				'ScheduledDelivery' => "",
+				'force' => "premium");
+			$data_string = http_build_query($data);
+			
+			$agent = "ThaiBulkSMS API PHP Client";
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+			$xml_result = curl_exec($ch);
+			$code = curl_getinfo($ch);
+			curl_close($ch);
+			
+			if($code['http_code'] == 200){
+				if(function_exists('simplexml_load_string')) {
+					$sms = new SimpleXMLElement($xml_result);
+					$count = count($sms->QUEUE);
+					if($count > 0){
+						$count_pass = 0;
+						$count_fail = 0;
+						$used_credit = 0;
+						for($i=0;$i<$count;$i++){
+							if($sms->QUEUE[$i]->Status){	
+								$count_pass++;	
+								$used_credit += $sms->QUEUE[$i]->UsedCredit;
+								if($page ==1){
+									redirect('funeral/assist2/Edit/'.$id,'refresh');
+								}
+								elseif($page ==2){
+									redirect('funeral/funeral_list','refresh');
+								}
+							}else{						
+								$count_fail++; 
+							}
+						}
+						if($count_pass > 0){
+							$msg_string = "สามารถส่งออกได้จำนวน $count_pass หมายเลข, ใช้เครดิตทั้งหมด $used_credit เครดิต";
+						} 				
+						if($count_fail > 0){
+							$msg_string = "ไม่สามารถส่งออกได้จำนวน $count_fail หมายเลข";
+						}
+					}else{
+						$msg_string = "เกิดข้อผิดพลาดในการทำงาน, (".$sms->Detail.")";
+					}
+					
+				}else if(function_exists('xml_parse')){
+					$xml = sms::xml2array($xml_result);
+					$count = count($xml['SMS']['QUEUE']);
+					if($count > 0){
+						$count_pass = 0;
+						$count_fail = 0;
+						$used_credit = 0;
+						for($i=0;$i<$count;$i++){
+							if($xml['SMS']['QUEUE'][$i]['Status']){	
+									$count_pass++;	
+									$used_credit += 				
+									$xml['SMS']['QUEUE'][$i]['UsedCredit'];
+								}else{						
+									$count_fail++; 
+								}
+							}
+						if($count_pass > 0){
+							$msg_string = "สามารถส่งออกได้จำนวน $count_pass หมายเลข, ใช้เครดิตทั้งหมด $used_credit เครดิต";
+						} 				
+						if($count_fail > 0){
+							$msg_string = "ไม่สามารถส่งออกได้จำนวน $count_fail หมายเลข";
+						}
+					}else{
+						$msg_string = "เกิดข้อผิดพลาดในการทำงาน, (".$xml['SMS']['Detail'].")";
+					}
+				}else{
+					$msg_string = "เกิดข้อผิดพลาดในการทำงาน: <br /> ระบบไม่รองรับฟังก์ชั่น XML";
+				}
+			}else{
+				//$http_codes = parse_ini_file("http_code.ini");
+		        //$msg_string = "เกิดข้อผิดพลาดในการทำงาน: <br />" . $code['http_code'] . " " . $http_codes[$code['http_code']];
+		        $msg_string = "เกิดข้อผิดพลาดในการทำงาน: <br />" . $code['http_code'];
+			}
+		
+		}else{
+			if(function_exists('fsockopen')) {
+				$msg_string = $this->sending_fsock($username,$password,$msisdn,$message,$sender,$ScheduledDelivery,$force);
+			}else {
+				$msg_string = "cURL OR fsockopen is not enabled";
+			}
+		}
+		return $msg_string;
+	}
+
+
+	public function funeral_list_ajax($process_action='View') { // รายการสงเคราะห์ผู้สูงอายุในภาวะยากลำบาก
+		//ini_set('max_execution_time', 300);
+		$data = array(); //Set Initial Variable to Views
+		/*-- Initial Data for Check User Permission --*/
+		$user_id = get_session('user_id');
+		$app_id = 21;
+		/*--END Inizial Data for Check User Permission--*/
+
+		$this->webinfo_model->LogSave($app_id,$process_action,'Sign In','Success'); //Save Sign In Log
+		$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id,$user_id); //Check User Permission
+
+		if(@$usrpm['perm_status']=='No' || !isset($usrpm['app_id'])){
+			echo json_encode(array());
+			$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign In Log
+		}else {
+			$app_name = $usrpm['app_name'];
+			$data['usrpm'] = $usrpm;
+			$data['user_id'] = $user_id;
+
+			//$data['diff_info'] = $this->difficult_model->getAll_diffInfo();
+
+			$this->load->model('funeral_list_model','funeral');
+			$list = $this->funeral->get_datatables();
+			$data = array();
+			$no = $_POST['start'];
+			// dieArray($list);
+			$sql = "sql:".$this->db->last_query();
+			foreach ($list as $i=>$funeral) {
+
+				$no++;
+				$row = array();
+
+			    $pers_info = $this->personal_model->getOnce_PersonalInfo($funeral->pers_id);
+			    $req_pers_info = $this->personal_model->getOnce_PersonalInfo($funeral->req_pers_id);
+
+          		$row[] = "<center>".$no."</center>";
+
+			    $row[] = $pers_info['pid'];
+			    $row[] = $pers_info['prename_th'].$pers_info['name'];
+				$row[] = $pers_info['gender_code'];
+				$age = '';
+				//fixing
+                if($pers_info['date_of_birth']!='' && checkdate(iconv_substr($pers_info['date_of_birth'],5,2,'utf-8'),iconv_substr($pers_info['date_of_birth'],8,2,'utf-8'),iconv_substr($pers_info['date_of_birth'],0,4,'utf-8'))) {
+                  $date = new DateTime($pers_info['date_of_birth']);
+                  $now = new DateTime();
+                  if($pers_info['date_of_death']!='' && checkdate(iconv_substr($pers_info['date_of_death'],5,2,'utf-8'),iconv_substr($pers_info['date_of_death'],8,2,'utf-8'),iconv_substr($pers_info['date_of_death'],0,4,'utf-8'))) {
+                    $now = new DateTime($pers_info['date_of_death']);
+                    $interval = $now->diff($date);
+					$age = $interval->y;
+				  }
+				
+				  else if($pers_info['date_of_death']!='') {
+					$age = '';
+				  }
+				  else {
+                    $interval = $now->diff($date);
+					$age = $interval->y;
+				  }
+				  
+				}
+				else if($pers_info['date_of_birth']!='' && iconv_substr($pers_info['date_of_birth'],5,2,'utf-8')!= '' && checkdate(iconv_substr($pers_info['date_of_death'],5,2,'utf-8'),iconv_substr($pers_info['date_of_death'],8,2,'utf-8'),iconv_substr($pers_info['date_of_death'],0,4,'utf-8'))){
+				
+					$birthdate = iconv_substr($pers_info['date_of_birth'],0,4,'utf-8')+543; 
+					$date = new DateTime($pers_info['date_of_birth']);
+					$now = new DateTime();
+					$interval = $now->diff($date);
+					$age = $interval->y;
+					
+			      }
+
+				
+				$row[] = "<center>".$age."</center>";
+		
+
+
+			    $date_of_req = '-';
+			    if($funeral->date_of_req!='') {
+			        $date_of_req = '<font class="text-sucsess" color="#18bd15">'.dateChange($funeral->date_of_req,5).'</font>';
+			    }
+			    $row[] = "<center>".$date_of_req."</center>";
+
+				$date_of_pay = '';
+				
+				if($funeral->date_of_pay !='' && $funeral->date_of_pay !='0000-00-00') {
+                    $date_of_pay = '<font class="text-sucsess" color="#18bd15">'.dateChange($funeral->date_of_pay,5).'</font>';
+				}
+				else if($funeral->cond_status =='ปฎิเสธ'){
+					$date_of_pay = '<font class="text-sucsess" color=red>ปฎิเสธ</font>';
+				}
+				else{
+                    $date_of_pay = '<font class="text-sucsess" color="#B9B9B9">รอช่วยเหลือ</font>';
+                }
+				$row[] = "<center>".$date_of_pay."</center>";
+				$row[] ="<div style='width:100%;text-align:right;'>".number_format($funeral->pay_amount,2)."</div>";
+
+				$req_channel = $this->difficult_model->getOnce_reqChanel2($funeral->chn_code);
+				
+				$org_id = $funeral->insert_org_id;
+				$org = $this->difficult_model->getOrg($org_id);
+				//$row[] = $org['org_title'];
+				if($org_id =='174'){
+					$row[]  = '<font class="text-sucsess" color="#B9B9B9">รอการส่งต่อ</font>';
+				}else{
+					if($org['org_short_title'] != ''){
+						$row[]= $org['org_short_title'];
+					}else{
+						$row[]= $org['org_title'];
+					}
+					
+				}
+				
+
+
+			    $tmp = $this->admin_model->getOnce_Application(22);
+                $tmp1 = $this->admin_model->chkOnce_usrmPermiss(22,$user_id); //Check User Permission
+                $btn = '';
+                $btn =$btn.'<!-- Single button -->
+                <div class="btn-group" style="cursor: pointer;">
+                  <i  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="dropdown-toggle fa fa-gear" aria-hidden="true" style="color: #000"></i>
+
+                  <ul class="dropdown-menu" style="position: absolute;left: -190px;">';
+
+                  $btn = $btn.' <li><a style="font-size:16px;" data-toggle="modal" data-target="#prt'.$funeral->fnrl_id.'" title="พิมพ์แบบฟอร์ม" >
+                       <i class="fa fa-file-pdf-o" aria-hidden="true" style="color: #000"></i> พิมพ์แบบฟอร์ม (.PDF)
+                   </a></li>';
+
+
+                  $btn =$btn.'<li><a  style="font-size:16px;"';
+
+                  if(!isset($tmp1['perm_status'])){ $btn =$btn.'class="disabled"';}else{ $btn =$btn.'href="'.site_url("funeral/inform1/Edit/".$funeral->fnrl_id); }
+                  $btn =$btn.'"><i class="fa fa-pencil" aria-hidden="true" style="color: #000"></i> แก้ไขรายการ</a></li>';
+
+                    $tmp = $this->admin_model->chkOnce_usrmPermiss(22,$user_id); //Check User Permission
+                    if(isset($tmp['perm_status'])) {
+                        if($tmp['perm_status']=='Yes') {
+                         $btn = $btn.'<li><a style="font-size:16px;" data-id='.$funeral->fnrl_id.' onclick="opn(this)" title="ลบ" >
+                             <i class="fa fa-trash" style="color: #000"></i> ลบรายการ
+                          </a></li>';
+                      }
+                    }
+
+                  $btn = $btn.'</ul>
+                              </div>';
+
+                $btn =$btn.'<!-- Print Modal -->
+                   <div class="modal fade" id="prt'.$funeral->fnrl_id.'" role="dialog">
+                     <div class="modal-dialog">
+
+                        <!-- Modal content-->
+                       <div class="modal-content">
+                         <div class="modal-header text-left">
+                           <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title" style="color: #333; font-size: 16px;">พิมพ์แบบฟอร์ม</h4>
+                          </div>
+                         <div class="modal-body">
+                           <div class="row">';
+
+                    $tmp = $this->admin_model->getOnce_Application(25);
+                    $tmp1 = $this->admin_model->chkOnce_usrmPermiss(25,get_session('user_id')); //Check User Permission
+
+                    $btn = $btn.'<div class="col-xs-12 col-sm-12 text-left" style="margin-bottom: 10px;"';
+                    if(!isset($tmp1['perm_status'])) {
+                      $btn = $btn.' class="disabled "';
+                    }else if($usrpm['app_id']==25) {
+                      $btn = $btn.' class="active "';
+                    }
+                    $btn = $btn.'>
+                                 <a style="color: #333; font-size: 16px;" target="_blank" href="'.site_url('report/C1/pdf?id='.$funeral->fnrl_id).'"><i class="fa fa-print" aria-hidden="true"></i> ';
+                    if(isset($tmp1['perm_status'])) {
+                     $btn = $btn.$tmp1['app_name'];
+                    }
+                    $btn = $btn.'  </a>
+                             </div>';
+
+                    $tmp = $this->admin_model->getOnce_Application(26);
+                    $tmp1 = $this->admin_model->chkOnce_usrmPermiss(26,get_session('user_id')); //Check User Permission
+                    $btn = $btn.'<div class="col-xs-12 col-sm-12 text-left" style="margin-bottom: 10px;" ';
+                    if(!isset($tmp1['perm_status'])) {
+                        $btn = $btn.' class="disabled" ';
+                    }else if($usrpm['app_id']==26) {
+                        $btn = $btn.' class="active" ';
+                    }
+                    $btn = $btn.'>';
+
+                     $btn = $btn.'<a style="color: #333; font-size: 16px; margin-bottom: 50px;" target="_blank" href="'.site_url('report/C2/pdf?id='.$funeral->fnrl_id).'"><i class="fa fa-print" aria-hidden="true"></i> ';
+                     if(isset($tmp1['perm_status'])) {
+                       $btn = $btn.$tmp1['app_name'];
+                     }
+                     $btn = $btn.'
+                            </a>
+                          </div>';
+
+                    $tmp = $this->admin_model->getOnce_Application(27);
+                    $tmp1 = $this->admin_model->chkOnce_usrmPermiss(27,get_session('user_id')); //Check User Permission
+
+                    $btn = $btn.'<div class="col-xs-12 col-sm-12 text-left" style="margin-bottom: 10px;" ';
+                    if(!isset($tmp1['perm_status'])) {
+                        $btn = $btn.' class="disabled" ';
+                      }else if($usrpm['app_id']==27) {
+                        $btn = $btn.' class="active" ';
+                      }
+                    $btn = $btn.'>';
+                    $btn = $btn.'<a style="color: #333; font-size: 16px; margin-bottom: 50px;" target="_blank" href="'.site_url('report/C3/pdf?id='.$funeral->fnrl_id).'"><i class="fa fa-print" aria-hidden="true"></i> ';
+                    if(isset($tmp1['perm_status'])) {
+                     $btn = $btn.$tmp1['app_name'];
+                    }
+                    $btn = $btn.'</a>
+                            </div>';
+
+
+                    $btn = $btn.'
+
+                           </div>
+                           <br/>
+
+                        </div>
+                      </div>
+
+                    </div>
+                   </div>
+                   <!-- End Print Modal -->';
+
+
+                $row[] = "<center>".$btn."</center>";
+				$row[] = "<center>".$req_channel['chn_name']."</center>";
+                $data[] = $row;
+            }
+
+
+			$output = array(
+							"draw" => $_POST['draw'],
+							"recordsTotal" => $this->funeral->count_all(),
+							"recordsFiltered" => $this->funeral->count_filtered(),
+							"data" => $data,
+					);
+			//output to json format
+			echo json_encode($output);
+			$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+		}
+
+	}
+
+	public function funeral_list($process_action='View') { // ตารางข้อมูล
+		$data = array(); //Set Initial Variable to Views
+		/*-- Initial Data for Check User Permission --*/
+		$user_id = get_session('user_id');
+		$app_id = 21;
+		$process_path = 'funeral/funeral_list';
+		/*--END Inizial Data for Check User Permission--*/
+
+		$this->webinfo_model->LogSave($app_id,$process_action,'Sign In','Success'); //Save Sign In Log
+		$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id,$user_id); //Check User Permission
+
+		if(@$usrpm['perm_status']=='No' || !isset($usrpm['app_id'])){
+			page500();
+			$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign In Log
+		}else {
+			$app_name = $usrpm['app_name'];
+			$data['usrpm'] = $usrpm;
+			$data['user_id'] = $user_id;
+
+			$data['csrf'] = array(
+				'name' => $this->security->get_csrf_token_name(),
+				'hash' => $this->security->get_csrf_hash()
+			);
+
+			$this->load->library('template',
+				array('name'=>'admin_template1',
+					  'setting'=>array('data_output'=>''))
+			); // Set Template
+
+			/*-- Load Datatables for Theme --*/
+			set_css_asset_head('../plugins/Static_Full_Version/css/plugins/dataTables/datatables.min.css');
+			set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/dataTables/datatables.min.js');
+			/*-- End Load Datatables for Theme --*/
+
+		    /*-- Toastr style --*/
+		    set_css_asset_head('../plugins/Static_Full_Version/css/plugins/toastr/toastr.min.css');
+		    set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/toastr/toastr.min.js');
+		    /*-- End Toastr style --*/
+
+		    /*-- datepicker custom --*/
+		    // set_css_asset_head('../plugins/bootstrap-datepicker-custom/dist/css/bootstrap-datepicker.css');
+		    // set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-custom.js');
+		    // set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/locales/bootstrap-datepicker.th.min.js');
+		    /*-- End datepicker custom--*/
+			set_css_asset_head('../plugins/bootstrap-datepicker1.9.0/css/bootstrap-datepicker.css');
+			set_js_asset_head('../plugins/bootstrap-datepicker1.9.0/js/bootstrap-datepicker.js');
+			set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-BE.js');
+			
+			//set_js_asset_footer('funeral_list.js','funeral'); //Set JS Index.js
+    		set_js_asset_footer('funeral_list_ajax.js','funeral'); //Set JS Index.js
+
+    		//set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/ionRangeSlider/ion.rangeSlider.min.js'); //Set JS Index.js
+
+/*			$data['fnrl_info'] = $this->common_model->custom_query("
+				SELECT * FROM fnrl_info
+				WHERE delete_user_id IS NULL
+				AND (delete_datetime IS NULL || delete_datetime = '0000-00-00 00:00:00')
+        ORDER BY update_datetime DESC,insert_datetime DESC
+        LIMIT 0,100
+			");*/
+
+			$data['process_action'] = $process_action;
+			$data['content_view'] = 'funeral_list_ajax';
+
+			$tmp = $this->admin_model->getOnce_Application($usrpm['app_parent_id']); //Used for find root application
+			$data['head_title'] = $tmp['app_name'];
+			$data['title'] = $usrpm['app_name'];
+
+			$this->template->load('index_page',$data,'funeral');
+			$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+		}
+
+	}
+
+	public function date_check($str) {
+    //$str = str_replace("-","",$str);
+		if(strlen($str)==10) {
+      $year = iconv_substr($str,6,4,'utf-8');
+      //settype("integer",$year);
+      $year = $year-543;
+			if(checkdate(iconv_substr($str,3,2,'utf-8'),iconv_substr($str,0,2,'utf-8'),$year)){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}else return false;
+	}
+
+	private function clr_fnrlInfo_form1() {
+		return array(
+					'date_of_req' => date('d-m-Y'),
+					'req_pid' => '',
+					'req_pers_id' => '',
+					'req_name' => ' - ',
+					'req_date_of_birth' => ' - ',
+					'req_gender_name' => ' - ',
+					'req_nation_name_th' => ' - ',
+					'req_relg_title' => ' - ',
+					'req_position' => '',
+					'req_org' => '',
+					'req_relation' => '',
+					'req_email_addr' => '',
+					'req_tel_no_mobile' => '',
+					'req_bank_acc_no' => '',
+					
+				
+
+					'pid' => '',
+					'pers_id' => '',
+					'name' => ' - ',
+					'date_of_birth' => ' - ',
+					'gender_name' => ' - ',
+					'nation_name_th' => ' - ',
+					'relg_title' => ' - ',
+					// 'tel_no_home' => '',
+					'tel_no' => '',
+					'email_addr' => '',
+
+					'reg_addr_id' => '',
+					'pre_addr_id' => '',
+
+					'date_of_req_pers_aprv' => '',
+					'req_pers_aprv_pid' => '',
+					'req_pers_aprv_pers_id' => '',
+					'req_pers_aprv_name' => ' - ',
+					'req_pers_aprv_date_of_birth' => ' - ',
+					'req_pers_aprv_gender_name' => ' - ',
+					'req_pers_aprv_nation_name_th' => ' - ',
+					'req_pers_aprv_relg_title' => ' - ',
+					'req_pers_aprv_position' => '',
+					'req_pers_aprv_org' => '',
+					'req_pers_aprv_relation' => '',
+					// 'req_pers_aprv_tel_no_home' => '',
+					'req_pers_aprv_tel_no_mobile' => '',
+					// 'req_pers_aprv_fax_no' => '',
+					// 'req_pers_aprv_email_addr' => '',
+
+					'date_of_not_survey_aprv' => '',
+					'not_survey_aprv_pid' => '',
+					'not_survey_aprv_pers_id' => '',
+					'not_survey_aprv_name' => ' - ',
+					'not_survey_aprv_date_of_birth' => ' - ',
+					'not_survey_aprv_gender_name' => ' - ',
+					'not_survey_aprv_nation_name_th' => ' - ',
+					'not_survey_aprv_relg_title' => ' - ',
+					'not_survey_aprv_position' => '',
+					'not_survey_aprv_org' => '',
+					'not_survey_aprv_relation' => '',
+					// 'not_survey_aprv_tel_no_home' => '',
+					'not_survey_aprv_tel_no_mobile' => '',
+		);
+	}
+
+	public function inform1($process_action='Add',$fnrl_id=0) { //แบบขอรับบริการ (แจ้งเรื่อง)
+		$data = array(); //Set Initial Variable to Views
+		/*-- Initial Data for Check User Permission --*/
+		$user_id = get_session('user_id');
+		$app_id = 22;
+		$process_path = 'funeral/inform1';
+		/*--END Inizial Data for Check User Permission--*/
+		$data['token_id'] = $this->common_model->getToken($user_id);
+		
+		$this->webinfo_model->LogSave($app_id,$process_action,'Sign In','Success'); //Save Sign In Log
+		$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id,$user_id); //Check User Permission
+
+		if(@$usrpm['perm_status']=='No' || !isset($usrpm['app_id'])){
+			page500();
+			$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+		}else {
+			$app_name = $usrpm['app_name'];
+			$data['usrpm'] = $usrpm;
+			$data['user_id'] = $user_id;
+
+			$this->load->library('template',
+				array('name'=>'admin_template1',
+					  'setting'=>array('data_output'=>''))
+			); // Set Template
+
+      /*-- datepicker --*/
+      //set_css_asset_head('../plugins/bootstrap-datepicker1.3.0/css/datepicker.css');
+      //set_js_asset_head('../plugins/bootstrap-datepicker1.3.0/js/bootstrap-datepicker.js');
+      /*-- End datepicker --*/
+
+      /*-- datepicker custom --*/
+		// set_css_asset_head('../plugins/bootstrap-datepicker-custom/dist/css/bootstrap-datepicker.css');
+		// set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-custom.js');
+		// set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/locales/bootstrap-datepicker.th.min.js');
+		set_css_asset_head('../plugins/bootstrap-datepicker1.9.0/css/bootstrap-datepicker.css');
+		set_js_asset_head('../plugins/bootstrap-datepicker1.9.0/js/bootstrap-datepicker.js');
+		set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-BE.js');
+		
+		/*-- End datepicker custom--*/
+
+  		/*-- Toastr style --*/
+  		set_css_asset_head('../plugins/Static_Full_Version/css/plugins/toastr/toastr.min.css');
+  		set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/toastr/toastr.min.js');
+  		/*-- End Toastr style --*/
+
+  		/*-- select2 style --*/
+  		set_css_asset_head('../plugins/Static_Full_Version/css/plugins/select2/select2.min.css');
+  		set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/select2/select2.full.min.js');
+  		/*-- End select2 style --*/
+
+  		set_js_asset_footer('webservice.js','personals'); //Set JS webservice.js
+  		set_js_asset_footer('inform1.js','funeral'); //Set JS inform1.js
+
+  		set_js_asset_footer('mapmarker.js','webconfig'); //Set JS mapmarker.js
+
+			$data['process_action'] = $process_action;
+			$data['content_view'] = 'inform1';
+
+			$tmp = $this->admin_model->getOnce_Application($usrpm['app_parent_id']); //Used for find root application
+			$data['head_title'] = $tmp['app_name'];
+			$data['title'] = $usrpm['app_name'];
+
+			$data['csrf'] = array(
+				'name' => $this->security->get_csrf_token_name(),
+				'hash' => $this->security->get_csrf_hash()
+			);
+
+			if($process_action=='Add' && get_inpost('bt_submit')=='' && $usrpm['perm_status']=='Yes') {
+				$data['fnrl_info'] = $this->clr_fnrlInfo_form1();
+
+				// dieArray($data['fnrl_info']);
+				$this->template->load('index_page',$data,'funeral');
+				$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+			}else if($process_action=='Added' && get_inpost('bt_submit')!='' && $usrpm['perm_status']=='Yes'){ //Add && Submit Form
+				// dieArray($_POST);
+				$this->load->library('form_validation');
+				$frm=$this->form_validation;
+
+				$frm->set_rules('fnrl_info[date_of_req]','วันที่แจ้งเรื่อง','required|callback_date_check');
+				$frm->set_rules('fnrl_info[req_pers_id]','เลขประจำตัวประชาชน (ผู้แจ้งเรื่อง)','required');
+				$frm->set_rules('impv_pid2[pid]','เลขประจำตัวประชาชน (ผู้สูงอายุ)','required');
+
+				$frm->set_message("required","กรุณากรอกข้อมูล %s");
+				$frm->set_message("numeric","%s ต้องเป็นตัวเลข");
+				$frm->set_message("date_check","%s รูปบบของวันที่ต้องถูกต้อง");
+
+				if($frm->run($this)){//Valid Data
+
+					$data_insert = array(
+						'date_of_req'				=> dateChange(get_inpost('fnrl_info[date_of_req]')),
+						'req_pers_id'				=> get_inpost('fnrl_info[req_pers_id]'),
+						'req_position'				=> get_inpost('fnrl_info[req_position]'),
+						'req_org'					=> get_inpost('fnrl_info[req_org]'),
+						'req_relation'				=> get_inpost('fnrl_info[req_relation]'),
+
+						'pers_id'					=> get_inpost('fnrl_info[pers_id]'),
+						'death_cause'				=> get_inpost('fnrl_info[death_cause]'),
+						'death_cause_identify'		=> get_inpost('fnrl_info[death_cause_identify]'),
+						'death_certificate_no'		=> get_inpost('fnrl_info[death_certificate_no]'),
+						'death_certificate_org'		=> get_inpost('fnrl_info[death_certificate_org]'),
+						'date_of_death_certificate'	=> dateChange(get_inpost('fnrl_info[date_of_death_certificate]')),
+
+						'date_of_req_pers_aprv'		=> dateChange(get_inpost('fnrl_info[date_of_req_pers_aprv]')),
+						'req_pers_aprv_pers_id'		=> get_inpost('fnrl_info[req_pers_aprv_pers_id]'),
+						'req_pers_aprv_position'	=> get_inpost('fnrl_info[req_pers_aprv_position]'),
+						'req_pers_aprv_org'			=> get_inpost('fnrl_info[req_pers_aprv_org]'),
+
+						'date_of_not_survey_aprv'	=> dateChange(get_inpost('fnrl_info[date_of_not_survey_aprv]')),
+						'not_survey_aprv_pers_id'	=> get_inpost('fnrl_info[not_survey_aprv_pers_id]'),
+						'not_survey_aprv_position'	=> get_inpost('fnrl_info[not_survey_aprv_position]'),
+						'not_survey_aprv_org'		=> get_inpost('fnrl_info[not_survey_aprv_org]'),
+
+						'insert_user_id'			=> getUser(),
+						'insert_org_id'				=> get_session('org_id'),
+						'insert_datetime'			=> getDatetime(),
+						);
+
+					
+					$id = $this->common_model->insert('fnrl_info',$data_insert);
+					/////////////////////name1/////////////////////////
+					$info_insert = array();
+					$info_insert = get_inpost_arr("impv_info");
+					$info_insert['pid']	= get_inpost('impv_pid[pid]');
+					$info_insert['tel_no_home']	= get_inpost('fnrl_info[req_tel_home]');
+					$info_insert['tel_no']	= get_inpost('fnrl_info[req_tel_no_mobile]');
+					$info_insert['email_addr']	= get_inpost('fnrl_info[req_email_addr]');					
+					$info_insert['bank_acc_no']	= get_inpost('fnrl_info[req_bank_acc_no]');
+					$info_insert['bank_name']	= get_inpost('fnrl_info[req_bank_name]');
+					unset($info_insert['pren_name']);
+					$info_id1 = $this->common_model->insert('pers_info',$info_insert);					
+					//$data_home_info['pid']		= get_inpost('impv_home_info[pers_id]');
+					$data_home_info['req_pers_id']		= $info_id1;					
+					
+					///////////////addr1/////////////////////
+					$data_addr = get_inpost_arr('impv_addr');
+					$data_addr['insert_user_id']		= getUser();
+					$data_addr['insert_datetime']	= getDatetime();
+					$data_addr['insert_org_id'] 		= get_session('org_id');
+					//print_r($data_addr);exit();
+					$new_data_id1 = $this->common_model->insert('pers_addr',$data_addr);
+					$data_add_info1['reg_addr_id']		= $new_data_id1;
+					$this->common_model->update('pers_info',$data_add_info1,array('pers_id'=>$info_id1));
+				
+					////////////////////name2/////////////////////////						
+					$info_insert2 = array();
+					$info_insert2 = get_inpost_arr("impv_info2");
+					$info_insert2['tel_no']	= get_inpost('pers_info[tel_no]');
+					
+					$info_insert2['pid']	= get_inpost('impv_pid2[pid]');
+					// get_inpost_arr('impv_date');
+					
+					$date_death = get_inpost('impv_date[date_of_death]');
+					if($date_death!='') {
+						$tmp = explode('/',$date_death);
+						$info_insert2['date_of_death'] = ($tmp[2]-543).'-'.$tmp[1].'-'.$tmp[0];						
+					}	
+					$info_insert2['pren_code']	= get_inpost('impv_info2[pren_code]');				
+					unset($info_insert2['pren_name']);
+					
+					$info_id2 = $this->common_model->insert('pers_info',$info_insert2);					
+					//$data_home_info['pid']		= get_inpost('impv_home_info[pers_id]');
+					$data_home_info['pers_id']		= $info_id2;					
+					
+					///////////////addr2/////////////////////
+					$data_addr2 = get_inpost_arr('impv_addr2');
+					$data_addr2['insert_user_id']		= getUser();
+					$data_addr2['insert_datetime']	= getDatetime();
+					$data_addr2['insert_org_id'] 		= get_session('org_id');
+					//print_r($data_addr);exit();
+					$new_data_id2 = $this->common_model->insert('pers_addr',$data_addr2);
+					$data_add_info2['reg_addr_id']		= $new_data_id2;					
+					$this->common_model->update('pers_info',$data_add_info2,array('pers_id'=>$info_id2));
+
+					////////////////////name3/////////////////////////						
+					$info_insert3 = array();
+					$info_insert3 = get_inpost_arr("impv_info3");
+					$info_insert3['pid']	= get_inpost('impv_pid3[pid]');
+					$info_insert3['tel_no']	= get_inpost('fnrl_info[req_pers_aprv_tel_no_mobile]');						
+					$info_insert3['pren_code']	= get_inpost('impv_info3[pren_code]');				
+					unset($info_insert3['pren_name']);						
+					$info_id3 = $this->common_model->insert('pers_info',$info_insert3);		
+					//$data_home_info['pid']		= get_inpost('impv_home_info[pers_id]');
+					$data_home_info['req_pers_aprv_pers_id']		= $info_id3;					
+					
+					///////////////addr3/////////////////////
+					$data_addr3 = get_inpost_arr('impv_addr3');
+					$data_addr3['insert_user_id']		= getUser();
+					$data_addr3['insert_datetime']	= getDatetime();
+					$data_addr3['insert_org_id'] 		= get_session('org_id');
+					//print_r($data_addr);exit();
+					$new_data_id3 = $this->common_model->insert('pers_addr',$data_addr3);
+					$data_add_info3['reg_addr_id']		= $new_data_id3;
+					$this->common_model->update('pers_info',$data_add_info3,array('pers_id'=>$info_id3));
+
+					////////////////////name5/////////////////////////						
+					$info_insert5 = array();
+					$info_insert5 = get_inpost_arr("impv_info5");
+					$info_insert5['pid']	= get_inpost('impv_pid5[pid]');
+					$info_insert5['tel_no']	= get_inpost('fnrl_info[not_survey_aprv_tel_no_mobile]');
+					$info_insert5['pren_code']	= get_inpost('impv_info5[pren_code]');				
+					unset($info_insert5['pren_name']);	
+					
+					$info_id5 = $this->common_model->insert('pers_info',$info_insert5);					
+					//$data_home_info['pid']		= get_inpost('impv_home_info[pers_id]');
+					$data_home_info['not_survey_aprv_pers_id']		= $info_id5;					
+					
+					///////////////addr5/////////////////////
+					$data_addr5 = get_inpost_arr('impv_addr5');
+					$data_addr5['insert_user_id']		= getUser();
+					$data_addr5['insert_datetime']	= getDatetime();
+					$data_addr5['insert_org_id'] 		= get_session('org_id');
+					//print_r($data_addr);exit();
+					$new_data_id5 = $this->common_model->insert('pers_addr',$data_addr5);
+					$data_add_info5['reg_addr_id']		= $new_data_id5;
+					$this->common_model->update('pers_info',$data_add_info5,array('pers_id'=>$info_id5));
+
+					////////////////////////////////////////////
+					$this->common_model->update('fnrl_info',$data_home_info,array('fnrl_id'=>$id));
+
+					// update data pers_info //////////////////
+					$req_pers_info = array(
+						'tel_no' => get_inpost('fnrl_info[req_tel_no_mobile]'),
+						'bank_acc_no'	=> get_inpost('fnrl_info[req_bank_acc_no]'),
+						'email_addr' => get_inpost('fnrl_info[req_email_addr]'),
+						'update_user_id' => getUser(),
+						'update_org_id' => get_session('org_id'),
+						'update_datetime' => getDatetime(),
+
+					);
+					$this->common_model->update('pers_info',$req_pers_info,array('pers_id'=>get_inpost('fnrl_info[req_pers_id]')));
+
+					$data_update_pers 	=   get_inpost_arr('pers_info');
+					//$data_req_addr 		=	get_inpost_arr('req_addr_info');
+
+					//$data_update_pers['tel_no'] 			= $data_update_pers['tel_no_mobile'];
+
+					unset($data_update_pers['tel_no_mobile']);
+					unset($data_update_pers['tel_no_home']);
+					unset($data_update_pers['fax_no']);
+					unset($data_update_pers['email_addr']);
+
+					//$data_update_pers['date_of_death'] 		= dateChange($data_update_pers['date_of_death']);
+					$data_update_pers['update_user_id'] 	= getUser();
+					$data_update_pers['update_org_id'] 		= get_session('org_id');
+					$data_update_pers['update_datetime'] 	= getDatetime();
+
+					// if(get_inpost('elder_addr_chk')!='on') {
+					// 	//add new addr
+					// 	$data_insert_addr 						= get_inpost_arr('pers_addr');
+					// 	$data_insert_addr['insert_user_id']		= getUser();
+					// 	$data_insert_addr['insert_datetime']	= getDatetime();	
+					// 	$new_addr_id 							= $this->common_model->insert('pers_addr',$data_insert_addr);
+					// 	$data_update_pers['pre_addr_id'] 		= $new_addr_id;
+
+					// }else{
+					// 	$data_update_pers['pre_addr_id'] = $data_update_pers['reg_addr_id'];
+					// 	//$data_update_pers['pre_addr_id'] = $data_update_pers['req_reg_addr_id'];
+					// }
+
+					if(get_inpost('elder_addr_chk')!='on') {
+						//add new addr
+						$data_insert_addr = get_inpost_arr('pers_addr');
+						$data_insert_addr['insert_user_id']		= getUser();
+						$data_insert_addr['insert_datetime']	= getDatetime();
+						$data_insert_addr['insert_org_id'] 		= get_session('org_id');
+						$new_addr_id = $this->common_model->insert('pers_addr',$data_insert_addr);
+						$data_update_pers2['pre_addr_id'] = $new_addr_id;
+
+					}else{
+						
+						//if($_POST['pre_addr_id'] != ""){  ///ดึงข้อมูลหน้าบัตร
+							$data_insert_addr = get_inpost_arr('pers_addr');
+							// $house_no =   get_inpost('pers_addr[addr_moo]'); 
+							// $houseNo = str_replace("หมู่ที่ ", "", $house_no);
+							$data_insert_addr['addr_home_no']		= get_inpost('addr_home_id'); 
+							$data_insert_addr['addr_moo']		= get_inpost('addr_moo_id');  /// $houseNo; 
+							$data_insert_addr['addr_alley']		= get_inpost('pers_addr[addr_alley]'); 
+							$data_insert_addr['addr_lane']		= get_inpost('pers_addr[addr_lane]');
+							$data_insert_addr['addr_road']		= get_inpost('pers_addr[addr_road]');
+
+							$data_insert_addr['insert_user_id']		= getUser();
+							$data_insert_addr['insert_datetime']	= getDatetime();
+							$data_insert_addr['insert_org_id'] 		= get_session('org_id');
+							//print_r($data_insert_addr);exit();
+							//pers_info['pre_addr_id'];
+							$new_addr_id = $this->common_model->insert('pers_addr',$data_insert_addr);
+							$data_update_pers2['pre_addr_id'] = $new_addr_id;
+							//$data_update_pers['reg_addr_id'] = $new_addr_id;
+						
+						// }else{
+						// 	$data_update_pers['reg_addr_id'] = $data_update_pers['reg_addr_id'];
+						// }
+						
+					}
+					//print_r($data_update_pers);exit();
+					// $data_update_pers2['reg_addr_id'] = $new_data_id;				
+					$this->common_model->update('pers_info',$data_update_pers2,array('pers_id'=>$info_id2));
+
+					$this->common_model->update('pers_info',$data_update_pers,array('pers_id'=>get_inpost('fnrl_info[pers_id]')));
+
+					$req_pers_aprv_pers_info = array(
+													// 'tel_no_home' => get_inpost('fnrl_info[req_pers_aprv_tel_no_home]'),
+													'tel_no' 			=> get_inpost('fnrl_info[req_pers_aprv_tel_no_mobile]'),
+													// 'fax_no' => get_inpost('fnrl_info[req_pers_aprv_fax_no]'),
+													'email_addr' => get_inpost('fnrl_info[req_pers_aprv_email_addr]'),
+													'update_user_id' 	=> getUser(),
+													'update_org_id' 	=> get_session('org_id'),
+													'update_datetime' 	=> getDatetime(),
+													);
+					$this->common_model->update('pers_info',$req_pers_aprv_pers_info,array('pers_id'=>get_inpost('fnrl_info[req_pers_aprv_pers_id]')));
+
+					if(get_inpost('fnrl_info[not_survey_aprv_pid]') != ''){
+						$not_survey_aprv_pers_info = array(
+														// 'tel_no_home' => get_inpost('fnrl_info[not_survey_aprv_tel_no_home]'),
+														'tel_no' 			=> get_inpost('fnrl_info[not_survey_aprv_tel_no_mobile]'),
+														// 'fax_no' => get_inpost('fnrl_info[not_survey_aprv_fax_no]'),
+														'email_addr' => get_inpost('fnrl_info[not_survey_aprv_email_addr]'),
+														'update_user_id' 	=> getUser(),
+														'update_org_id' 	=> get_session('org_id'),
+														'update_datetime'	=> getDatetime(),
+														 );
+						$this->common_model->update('pers_info',$not_survey_aprv_pers_info,array('pers_id'=>get_inpost('fnrl_info[not_survey_aprv_pers_id]')));
+					}
+					///////////////////////////////////////////
+					$sms_status  = $this->input->post("sms");
+					if($sms_status == "true"){
+						$msg = "รับคำขอของท่านแล้ว ขณะนี้อยู่ระหว่างพิจารณาคำขอ";
+						$no = get_inpost('fnrl_info[req_tel_no_mobile]');
+						$page=1;
+						$this->send_sms($no,$msg,$id,$page);
+					}
+
+					$this->session->set_flashdata('msg',setMsg('011')); //Set Message code 011
+
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+
+					redirect('funeral/assist2/Edit/'.$id,'refresh');
+
+				}else {
+					$data['fnrl_info'] = get_inpost_arr('fnrl_info');
+
+					$this->session->set_flashdata('msg',setMsg('012')); //Set Message code 012
+
+					$this->template->load('index_page',$data,'funeral');
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+				}
+
+			}else if($process_action=='Edit' && get_inpost('bt_submit')=='' && $usrpm['perm_status']=='Yes') {
+
+				$row = rowArray($this->common_model->custom_query("
+					SELECT * FROM fnrl_info
+					WHERE delete_user_id IS NULL
+					AND (delete_datetime IS NULL || delete_datetime = '0000-00-00 00:00:00')
+					AND fnrl_id = {$fnrl_id}
+	        		ORDER BY update_datetime DESC,insert_datetime DESC
+				"));
+				// dieArray($row);
+				if(isset($row['fnrl_id'])) {
+					// $data['fnrl_info'] = array_merge($this->clr_fnrlInfo_form1(),$row);
+					// $data['fnrl_info'] = array_merge($this->clr_fnrlInfo_form1(),$row);
+					$data['fnrl_info'] = $row;				
+					
+
+					$req_diff_info = $this->common_model->get_where_custom('pers_info','pers_id',$data['fnrl_info']['pers_id']);
+					$data['req_diff_info'] = $req_diff_info[0];
+					//dieArray($data['req_diff_info']);
+
+					$addr_diff_info = $this->common_model->get_where_custom('pers_addr','addr_id',$data['req_diff_info']['reg_addr_id']);
+					$data['addr_pers_info2'] = $addr_diff_info[0];
+
+					$req_pers_info = $this->common_model->get_where_custom('pers_info','pers_id',$data['fnrl_info']['req_pers_id']);
+					$data['req_pers_info'] = $req_pers_info[0];
+
+					$req_addr_diff_info = $this->common_model->get_where_custom('pers_addr','addr_id',$data['req_pers_info']['reg_addr_id']);
+					$data['addr_pers_info'] = $req_addr_diff_info[0];
+
+					$req_diff_info4 = $this->common_model->get_where_custom('pers_info','pers_id',$data['fnrl_info']['req_pers_aprv_pers_id']);
+					$data['req_diff_info4'] = $req_diff_info4[0];
+
+					$addr_diff_info4 = $this->common_model->get_where_custom('pers_addr','addr_id',$data['req_diff_info4']['reg_addr_id']);
+					$data['addr_pers_info4'] = $addr_diff_info4[0];
+					
+					$req_diff_info5 = $this->common_model->get_where_custom('pers_info','pers_id',$data['fnrl_info']['not_survey_aprv_pers_id']);
+					$data['req_diff_info5'] = $req_diff_info5[0];
+
+					$addr_diff_info5 = $this->common_model->get_where_custom('pers_addr','addr_id',$data['req_diff_info5']['reg_addr_id']);
+					$data['addr_pers_info5'] = $addr_diff_info5[0];
+
+					$data['req_prename'] = $this->common_model->getPrename($data['req_pers_info']['pren_code']);
+					$data['req_prename2'] = $this->common_model->getPrename($data['req_diff_info']['pren_code']);
+					$data['req_prename3'] = $this->common_model->getPrename($data['req_diff_info4']['pren_code']);
+					$data['req_prename4'] = $this->common_model->getPrename($data['req_diff_info5']['pren_code']);
+						// print_r($data['req_prename']);exit();
+
+					//dieArray($data['addr_pers_info5']);
+					$pers_info = $this->personal_model->getOnce_PersonalInfo($row['pers_id']);
+					$data['addr_info'] 					= $this->personal_model->getOnce_PersonalAddress($pers_info['pre_addr_id']);
+					// dieArray($pers_info);
+					$data['pers_info'] 					= $pers_info;
+					$data['pers_info']['tel_no'] 		= $pers_info['tel_no'];
+					$data['pers_info']['date_of_death'] 		= $pers_info['date_of_death'];
+
+					$data['fnrl_info']['pid'] 			= $pers_info['pid'];
+					$data['fnrl_info']['pers_id'] 		= $pers_info['pers_id'];
+					$data['fnrl_info']['req_pers_id'] 	= $pers_info['req_pers_id'];
+					$data['fnrl_info']['reg_addr_id'] 	= $pers_info['reg_addr_id'];
+					$data['fnrl_info']['pre_addr_id'] 	= $pers_info['pre_addr_id'];
+					$data['fnrl_info']['name'] 			= $pers_info['name'];
+					
+					$tmp4 = $this->personal_model->getOnce_PersonalAddress($pers_info['reg_addr_id']);
+					$data['fnrl_info']['reg_add_info'] = $tmp4['addr_home_no'];
+					$data['fnrl_info']['reg_add_info'] .= ($tmp4['addr_moo'] != '')?' หมู่'.$tmp4['addr_moo']:'';
+					$data['fnrl_info']['reg_add_info'] .= ($tmp4['addr_sub_district'] != '')?' ต.'.$tmp4['addr_sub_district']:'';
+					$data['fnrl_info']['reg_add_info'] .= ($tmp4['addr_district'] != '')?' อ.'.$tmp4['addr_district']:'';
+					$data['fnrl_info']['reg_add_info'] .= ($tmp4['addr_province'] != '')?' จ.'.$tmp4['addr_province'].' '.$tmp4['addr_zipcode']:'';
+					$data['fnrl_info']['reg_add_info'] = ($data['fnrl_info']['reg_add_info']!='')?$data['fnrl_info']['reg_add_info']:'-';
+				
+			$data['pers_info']['date_of_birth_num'] = $pers_info['date_of_birth'];	
+          if($pers_info['date_of_birth']!='' && checkdate(iconv_substr($pers_info['date_of_birth'],5,2,'utf-8'),iconv_substr($pers_info['date_of_birth'],8,2,'utf-8'),iconv_substr($pers_info['date_of_birth'],0,4,'utf-8')) ) {
+            $date = new DateTime($pers_info['date_of_birth']);
+            $now = new DateTime($pers_info['date_of_death']);
+            $interval = $now->diff($date);
+            $age = $interval->y;
+            $data['fnrl_info']['age'] = $age;
+			$data['fnrl_info']['date_of_birth'] = formatDateThai($pers_info['date_of_birth'])." (อายุ ".$age." ปี)";
+			if($age >= 60){
+				$data['fnrl_info']['age_status']="60 ปีขึ้นไป";
+			}
+			else{
+				$data['fnrl_info']['age_status']="น้อยกว่า60ปี";
+			}
+		  }
+		  else if($pers_info['date_of_birth']!='' && iconv_substr($pers_info['date_of_birth'],5,2,'utf-8')!= ''){
+			$birthdate = iconv_substr($pers_info['date_of_birth'],0,4,'utf-8')+543; 
+			$date = new DateTime($pers_info['date_of_birth']);
+			$now = new DateTime($pers_info['date_of_death']);
+            $interval = $now->diff($date);
+            $age = $interval->y;
+            $data['fnrl_info']['age'] = $age;
+			$data['fnrl_info']['date_of_birth'] = "วัน - เดือน - พ.ศ. ".$birthdate." (อายุ ".$age." ปี)" ;
+			if($age >= 60){
+				$data['fnrl_info']['age_status']="60 ปีขึ้นไป";
+			}
+			else{
+				$data['fnrl_info']['age_status']="น้อยกว่า60ปี";
+			}
+		  }
+		  else {
+			  $data['fnrl_info']['date_of_birth'] = ' - ';
+			  $data['fnrl_info']['age_status']='<span> - </span>';
+			 
+		  }
+
+		  if($pers_info['date_of_death'] != ''){
+			$data['fnrl_info']['date_of_death'] = formatDateThai($pers_info['date_of_death']) ;
+			$data['fnrl_info']['death_date'] = formatDateThai($pers_info['date_of_death']) ;
+			$data['fnrl_info']['death_status']='<span style="color:red">เสียชีวิต</span>';
+		  }
+		  else{
+			$data['fnrl_info']['date_of_death'] = "ยังไม่เสียชีวิต" ;
+			$data['fnrl_info']['death_date']=' - ';
+			$data['fnrl_info']['death_status']='<span style="color:green">มีชีวิตอยู่</span>';
+		  }
+		  			
+					$data['fnrl_info']['gender_name'] = $pers_info['gender_name']==''?' - ':$pers_info['gender_name'];
+					$data['fnrl_info']['nation_name_th'] = $pers_info['nation_name_th']==''?' - ':$pers_info['nation_name_th'];
+					$data['fnrl_info']['relg_title'] = $pers_info['relg_title']==''?' - ':$pers_info['relg_title'];
+					
+
+			
+
+					if($row['date_of_req']!='') {
+						$tmp = explode('-',$row['date_of_req']);
+						$data['fnrl_info']['date_of_req'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}
+					if($pers_info['date_of_death']!='') {
+						$tmp = explode('-',$pers_info['date_of_death']);
+						$data['pers_info']['date_of_death'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}
+					if($row['date_of_death_certificate']!='') {
+						$tmp = explode('-',$row['date_of_death_certificate']);
+						$data['fnrl_info']['date_of_death_certificate'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}
+
+					if($row['date_of_req_pers_aprv']!='') {
+						$tmp = explode('-',$row['date_of_req_pers_aprv']);
+						$data['fnrl_info']['date_of_req_pers_aprv'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}
+
+					if($row['date_of_not_survey_aprv']!='') {
+						$tmp = explode('-',$row['date_of_not_survey_aprv']);
+						$data['fnrl_info']['date_of_not_survey_aprv'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}
+
+					// $row['req_pers_id'] = $row['req_pers_id']==''?0:$row['req_pers_id'];
+					$tmp2 = $this->personal_model->getOnce_PersonalInfo($row['req_pers_id']);
+					if(isset($tmp2['pid'])) {
+						$data['fnrl_info']['req_pid'] = $tmp2['pid'];
+						$data['fnrl_info']['req_name'] = $tmp2['name'];
+			            if($tmp2['date_of_birth']!='' && checkdate(iconv_substr($tmp2['date_of_birth'],5,2,'utf-8'),iconv_substr($tmp2['date_of_birth'],8,2,'utf-8'),iconv_substr($tmp2['date_of_birth'],0,4,'utf-8'))) {
+			              $date = new DateTime($tmp2['date_of_birth']);
+			              $now = new DateTime();
+			              $interval = $now->diff($date);
+			              $age = $interval->y;
+			              $data['fnrl_info']['req_date_of_birth'] = formatDateThai($tmp2['date_of_birth']).' (อายุ '.$age.' ปี)';
+						}
+						else if($tmp2['date_of_birth']!='' && iconv_substr($tmp2['date_of_birth'],5,2,'utf-8')!= ''){
+							$birthdate = iconv_substr($tmp2['date_of_birth'],0,4,'utf-8')+543; 
+							$date = new DateTime($tmp2['date_of_birth']);
+							$now = new DateTime();
+							$interval = $now->diff($date);
+							$age = $interval->y;
+							$data['fnrl_info']['date_of_birth'] = "วัน - เดือน - พ.ศ. ".$birthdate." (อายุ ".$age." ปี)";
+						}
+						else {
+			            	$data['fnrl_info']['req_date_of_birth'] = ' - ';
+			            }
+						$data['fnrl_info']['req_gender_name'] 		= $tmp2['gender_name']==''?' - ':$tmp2['gender_name'];
+						$data['fnrl_info']['req_nation_name_th'] 	= $tmp2['nation_name_th']==''?' - ':$tmp2['nation_name_th'];
+						$data['fnrl_info']['req_relg_title'] 		= $tmp2['relg_title']==''?' - ':$tmp2['relg_title'];
+						$data['fnrl_info']['req_pers_id'] 			= $tmp2['pers_id'];
+						$data['fnrl_info']['req_tel_no_mobile'] 	= $tmp2['tel_no'];
+						$data['fnrl_info']['req_tel_home'] 			= $tmp2['tel_no_home'];
+						$data['fnrl_info']['req_bank_name'] 		= $tmp2['bank_name'];
+						$data['fnrl_info']['req_bank_other'] 		= $tmp2['bank_other'];
+						$data['fnrl_info']['req_email_addr'] 		= $tmp2['email_addr'];
+						$data['fnrl_info']['req_bank_acc_no'] 		= $tmp2['bank_acc_no'];
+						$tmpp = $this->personal_model->getOnce_PersonalAddress($tmp2['reg_addr_id']);
+						$data['fnrl_info']['req_reg_add_info'] = $tmpp['addr_home_no'];
+						$data['fnrl_info']['req_reg_add_info'] .= ($tmpp['addr_moo'] != '')?' หมู่'.$tmpp['addr_moo']:'';
+						$data['fnrl_info']['req_reg_add_info'] .= ($tmpp['addr_sub_district'] != '')?' ต.'.$tmpp['addr_sub_district']:'';
+						$data['fnrl_info']['req_reg_add_info'] .= ($tmpp['addr_district'] != '')?' อ.'.$tmpp['addr_district']:'';
+						$data['fnrl_info']['req_reg_add_info'] .= ($tmpp['addr_province'] != '')?' จ.'.$tmpp['addr_province'].' '.$tmpp['addr_zipcode']:'';
+
+						$data['fnrl_info']['req_reg_add_info'] = ($data['fnrl_info']['req_reg_add_info']!='')?$data['fnrl_info']['req_reg_add_info']:'-';
+
+					}
+
+					$tmp3 = $this->personal_model->getOnce_PersonalInfo($row['req_pers_aprv_pers_id']);
+					// dieArray($tmp3);
+					if(isset($tmp3['pid'])) {
+							$data['fnrl_info']['req_pers_aprv_pid']  = $tmp3['pid'];
+							$data['fnrl_info']['req_pers_aprv_name'] = $tmp3['name'];
+			            if($tmp3['date_of_birth']!='' && checkdate(iconv_substr($tmp3['date_of_birth'],5,2,'utf-8'),iconv_substr($tmp3['date_of_birth'],8,2,'utf-8'),iconv_substr($tmp3['date_of_birth'],0,4,'utf-8'))) {
+			              $date = new DateTime($tmp3['date_of_birth']);
+			              $now  = new DateTime();
+			              $interval = $now->diff($date);
+			              $age = $interval->y;
+			              $data['fnrl_info']['req_pers_aprv_date_of_birth'] = formatDateThai($tmp3['date_of_birth']).' (อายุ '.$age.' ปี)';
+						}
+						else if($tmp3['date_of_birth']!='' && iconv_substr($tmp3['date_of_birth'],5,2,'utf-8')!= ''){
+							$birthdate = iconv_substr($tmp3['date_of_birth'],0,4,'utf-8')+543; 
+							$date = new DateTime($tmp3['date_of_birth']);
+							$now = new DateTime();
+							$interval = $now->diff($date);
+							$age = $interval->y;
+							$data['fnrl_info']['req_pers_aprv_date_of_birth'] = "วัน - เดือน - พ.ศ. ".$birthdate." (อายุ ".$age." ปี)";
+						}
+						else {
+			            	$data['fnrl_info']['req_pers_aprv_date_of_birth'] = ' - ';
+			            }
+						$data['fnrl_info']['req_pers_aprv_gender_name'] 		= $tmp3['gender_name']==''?' - ':$tmp3['gender_name'];
+						$data['fnrl_info']['req_pers_aprv_nation_name_th'] 		= $tmp3['nation_name_th']==''?' - ':$tmp3['nation_name_th'];
+						$data['fnrl_info']['req_pers_aprv_relg_title'] 			= $tmp3['relg_title']==''?' - ':$tmp3['relg_title'];
+						$data['fnrl_info']['req_pers_aprv_pers_id'] 			= $tmp3['pers_id'];
+						// $data['fnrl_info']['req_pers_aprv_tel_no_home'] 		= $tmp3['tel_no_home'];
+						$data['fnrl_info']['req_pers_aprv_tel_no_mobile'] 		= $tmp3['tel_no'];
+						$data['fnrl_info']['req_pers_aprv_email_addr'] 			= $tmp3['email_addr'];
+						$tmp7 = $this->personal_model->getOnce_PersonalAddress($tmp3['reg_addr_id']);
+						$data['fnrl_info']['req_pers_aprv_addr_info'] = $tmp7['addr_home_no'];
+						$data['fnrl_info']['req_pers_aprv_addr_info'] .= ($tmp7['addr_moo'] != '')?' หมู่'.$tmp7['addr_moo']:'';
+						$data['fnrl_info']['req_pers_aprv_addr_info'] .= ($tmp7['addr_sub_district'] != '')?' ต.'.$tmp7['addr_sub_district']:'';
+						$data['fnrl_info']['req_pers_aprv_addr_info'] .= ($tmp7['addr_district'] != '')?' อ.'.$tmp7['addr_district']:'';
+						$data['fnrl_info']['req_pers_aprv_addr_info'] .= ($tmp7['addr_province'] != '')?' จ.'.$tmp7['addr_province'].' '.$tmp7['addr_zipcode']:'';
+
+						$data['fnrl_info']['req_pers_aprv_addr_info'] = ($data['fnrl_info']['req_pers_aprv_addr_info']!='')?$data['fnrl_info']['req_pers_aprv_addr_info']:'-';
+
+					}
+
+					$tmp4 = $this->personal_model->getOnce_PersonalInfo($row['not_survey_aprv_pers_id']);
+					if(isset($tmp4['pid'])) {
+						$data['fnrl_info']['not_survey_aprv_pid']  = $tmp4['pid'];
+						$data['fnrl_info']['not_survey_aprv_name'] = $tmp4['name'];
+			            if($tmp4['date_of_birth']!='' && checkdate(iconv_substr($tmp4['date_of_birth'],5,2,'utf-8'),iconv_substr($tmp4['date_of_birth'],8,2,'utf-8'),iconv_substr($tmp4['date_of_birth'],0,4,'utf-8'))) {
+			              $date = new DateTime($tmp4['date_of_birth']);
+			              $now = new DateTime();
+			              $interval = $now->diff($date);
+			              $age = $interval->y;
+			              $data['fnrl_info']['not_survey_aprv_date_of_birth'] = formatDateThai($tmp4['date_of_birth']).' (อายุ '.$age.' ปี)';
+						}
+						else if($tmp4['date_of_birth']!='' && iconv_substr($tmp4['date_of_birth'],5,2,'utf-8')!= ''){
+							$birthdate = iconv_substr($tmp4['date_of_birth'],0,4,'utf-8')+543; 
+							$date = new DateTime($tmp4['date_of_birth']);
+							$now = new DateTime();
+							$interval = $now->diff($date);
+							$age = $interval->y;
+							$data['fnrl_info']['not_survey_aprv_date_of_birth'] = "วัน - เดือน - พ.ศ. ".$birthdate." (อายุ ".$age." ปี)";
+						}
+						else {
+			            	$data['fnrl_info']['not_survey_aprv_date_of_birth'] = ' - ';
+			            }
+						$data['fnrl_info']['not_survey_aprv_gender_name'] 		= $tmp4['gender_name']==''?' - ':$tmp4['gender_name'];
+						$data['fnrl_info']['not_survey_aprv_nation_name_th'] 	= $tmp4['nation_name_th']==''?' - ':$tmp4['nation_name_th'];
+						$data['fnrl_info']['not_survey_aprv_relg_title'] 		= $tmp4['relg_title']==''?' - ':$tmp4['relg_title'];
+						$data['fnrl_info']['not_survey_aprv_pers_id'] 			= $tmp4['pers_id'];
+						$data['fnrl_info']['not_survey_aprv_tel_no_mobile'] 	= $tmp4['tel_no'];
+						$tmp8 = $this->personal_model->getOnce_PersonalAddress($tmp4['reg_addr_id']);
+						$data['fnrl_info']['not_survey_aprv_reg_addr_info'] = $tmp8['addr_home_no'];
+						$data['fnrl_info']['not_survey_aprv_reg_addr_info'] .= ($tmp8['addr_moo'] != '')?' หมู่'.$tmp8['addr_moo']:'';
+						$data['fnrl_info']['not_survey_aprv_reg_addr_info'] .= ($tmp8['addr_sub_district'] != '')?' ต.'.$tmp8['addr_sub_district']:'';
+						$data['fnrl_info']['not_survey_aprv_reg_addr_info'] .= ($tmp8['addr_district'] != '')?' อ.'.$tmp8['addr_district']:'';
+						$data['fnrl_info']['not_survey_aprv_reg_addr_info'] .= ($tmp8['addr_province'] != '')?' จ.'.$tmp8['addr_province'].' '.$tmp8['addr_zipcode']:'';
+
+						$data['fnrl_info']['not_survey_aprv_reg_addr_info'] = ($data['fnrl_info']['not_survey_aprv_reg_addr_info']!='')?$data['fnrl_info']['not_survey_aprv_reg_addr_info']:'-';
+
+					}
+					// dieArray($data);
+					$this->template->load('index_page',$data,'funeral');
+				}else {
+					page500();
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+				}
+
+			}else if($process_action=='Edited' && get_inpost('bt_submit')!='' && $usrpm['perm_status']=='Yes') { //Edit && Submit Form
+				$process_action='Edited';
+				// dieArray($_POST);
+				$this->load->library('form_validation');
+				$frm=$this->form_validation;
+
+				$frm->set_rules('fnrl_info[date_of_req]','วันที่แจ้งเรื่อง','callback_date_check');
+				$frm->set_rules('fnrl_info[req_pid]','เลขประจำตัวประชาชน (ผู้แจ้งเรื่อง)','required');
+				$frm->set_rules('fnrl_info[pid]','เลขประจำตัวประชาชน (ผู้สูงอายุ)','required');
+
+				$frm->set_message("required","กรุณากรอกข้อมูล %s");
+				$frm->set_message("numeric","%s ต้องเป็นตัวเลข");
+				$frm->set_message("date_check","%s รูปบบของวันที่ต้องถูกต้อง");
+
+				if($frm->run($this)){//Valid Data
+					
+					$data_update = array(
+						'date_of_req'				=> dateChange(get_inpost('fnrl_info[date_of_req]')),
+						//'req_pers_id'				=> get_inpost('fnrl_info[req_pers_id]'),
+						'req_position'				=> get_inpost('fnrl_info[req_position]'),
+						'req_org'					=> get_inpost('fnrl_info[req_org]'),
+						'req_relation'				=> get_inpost('fnrl_info[req_relation]'),
+
+						//'pers_id'					=> get_inpost('fnrl_info[pers_id]'),
+						'death_cause'				=> get_inpost('fnrl_info[death_cause]'),
+						'death_cause_identify'		=> get_inpost('fnrl_info[death_cause_identify]'),
+						'death_certificate_no'		=> get_inpost('fnrl_info[death_certificate_no]'),
+						'death_certificate_org'		=> get_inpost('fnrl_info[death_certificate_org]'),
+						'date_of_death_certificate'	=> dateChange(get_inpost('fnrl_info[date_of_death_certificate]')),
+
+						'date_of_req_pers_aprv'		=> dateChange(get_inpost('fnrl_info[date_of_req_pers_aprv]')),
+						'req_pers_aprv_pers_id'		=> get_inpost('fnrl_info[req_pers_aprv_pers_id]'),
+						'req_pers_aprv_position'	=> get_inpost('fnrl_info[req_pers_aprv_position]'),
+						'req_pers_aprv_org'			=> get_inpost('fnrl_info[req_pers_aprv_org]'),
+
+						'date_of_not_survey_aprv'	=> dateChange(get_inpost('fnrl_info[date_of_not_survey_aprv]')),
+						'not_survey_aprv_pers_id'	=> get_inpost('fnrl_info[not_survey_aprv_pers_id]'),
+						'not_survey_aprv_position'	=> get_inpost('fnrl_info[not_survey_aprv_position]'),
+						'not_survey_aprv_org'		=> get_inpost('fnrl_info[not_survey_aprv_org]'),
+
+						'update_user_id'			=> getUser(),
+						'update_org_id'				=> get_session('org_id'),
+						'update_datetime'			=> getDatetime(),
+					);
+					//$data_update['fnrl_info']['pers_id']= get_inpost('fnrl_info[pers_id]');
+					//$data_update['fnrl_info']['req_pers_id']= get_inpost('fnrl_info[req_pers_id]');
+					// dieArray($data_update);
+					$this->common_model->update('fnrl_info',$data_update,array('fnrl_id'=>$fnrl_id));
+
+
+					// update data pers_info //////////////////
+					$row = rowArray($this->common_model->custom_query("
+					SELECT * FROM fnrl_info
+					WHERE delete_user_id IS NULL
+					AND (delete_datetime IS NULL || delete_datetime = '0000-00-00 00:00:00')
+					AND fnrl_id = {$fnrl_id}
+	        		ORDER BY update_datetime DESC,insert_datetime DESC
+					"));
+					$req_pers_info = array(
+
+										'tel_no' 			=> get_inpost('fnrl_info[req_tel_no_mobile]'),
+										'tel_no_home' 		=> get_inpost('fnrl_info[req_tel_home]'),
+										'bank_acc_no' 		=> get_inpost('fnrl_info[req_bank_acc_no]'),
+										'bank_name' 		=> get_inpost('fnrl_info[req_bank_name]'),
+										'bank_other' 		=> get_inpost('fnrl_info[req_bank_other]'),
+										'email_addr' 		=> get_inpost('fnrl_info[req_email_addr]'),
+										'update_user_id' 	=> getUser(),
+										'update_org_id' 	=> get_session('org_id'),
+										'update_datetime' 	=> getDatetime(),
+
+					);
+					$this->common_model->update("pers_info",$req_pers_info,array('pers_id'=>$row['req_pers_id']));
+		
+					$data_update_pers 						= get_inpost_arr('pers_info');
+
+					$req_pers_info2 = $this->common_model->get_where_custom('pers_info','pers_id',$row['pers_id']);
+					$req_addr_info2 = $req_pers_info2[0];
+					
+					$req_pers_info = $this->common_model->get_where_custom('pers_info','pers_id',$row['req_pers_id']);
+					$req_addr_info = $req_pers_info[0];
+
+					$req_pers_info3 = $this->common_model->get_where_custom('pers_info','pers_id',$row['req_pers_aprv_pers_id']);
+					$req_addr_info3 = $req_pers_info3[0];
+
+					$req_pers_info4 = $this->common_model->get_where_custom('pers_info','pers_id',$row['not_survey_aprv_pers_id']);
+					$req_addr_info4 = $req_pers_info4[0];
+					
+					
+					$date_death = get_inpost('impv_date[date_of_death]');
+					if($date_death!='') {
+						$tmp = explode('/',$date_death);
+						$info_date_death['date_of_death'] = ($tmp[2]-543).'-'.$tmp[1].'-'.$tmp[0];		
+						$this->common_model->update("pers_info",$info_date_death,array('pers_id'=>$req_addr_info2['pers_id']));  //name 1
+				
+					}	
+					
+					/////////////////////name1/////////////////////////
+					$info_insert = array();
+					$info_insert = get_inpost_arr("impv_info");
+					$info_insert['pid']	= get_inpost('impv_pid[pid]');
+					$info_insert['tel_no_home']	= get_inpost('fnrl_info[req_tel_home]');
+					$info_insert['tel_no']	= get_inpost('fnrl_info[req_tel_no_mobile]');
+					$info_insert['email_addr']	= get_inpost('fnrl_info[req_email_addr]');					
+					$info_insert['bank_acc_no']	= get_inpost('fnrl_info[req_bank_acc_no]');
+					$info_insert['bank_name']	= get_inpost('fnrl_info[req_bank_name]');								
+					unset($info_insert['pren_name']);	
+					// print_r($info_insert);exit();									
+					$this->common_model->update("pers_info",$info_insert,array('pers_id'=>$row['req_pers_id']));  //name 1
+
+					///////////////addr1/////////////////////
+					$data_addr = get_inpost_arr('impv_addr');
+					$data_addr['update_user_id']		= getUser();
+					$data_addr['update_datetime']	= getDatetime();
+					$data_addr['update_org_id'] 		= get_session('org_id');
+					//print_r($data_addr);exit();
+					$this->common_model->update('pers_addr',$data_addr,array('addr_id'=>$req_addr_info['reg_addr_id']));
+				
+					////////////////////name2/////////////////////////						
+					$info_insert2 = array();
+					$info_insert2 = get_inpost_arr("impv_info2");
+					$info_insert2['pid']	= get_inpost('impv_pid2[pid]');
+					$info_insert2['tel_no']	= get_inpost('pers_info[tel_no]');
+					$info_insert2['pren_code']	= get_inpost('impv_info2[pren_code]');				
+					unset($info_insert2['pren_name']);
+					// get_inpost_arr('impv_date');
+					$this->common_model->update("pers_info",$info_insert2,array('pers_id'=>$row['pers_id']));//name 2
+										
+					///////////////addr2/////////////////////
+					$data_addr2 = get_inpost_arr('impv_addr2');
+					$data_addr2['update_user_id']		= getUser();
+					$data_addr2['update_datetime']	= getDatetime();
+					$data_addr2['update_org_id'] 		= get_session('org_id');						
+					$this->common_model->update('pers_addr',$data_addr2,array('addr_id'=>$req_addr_info2['reg_addr_id']));
+					
+					////////////////////name3/////////////////////////						
+					$info_insert3 = array();
+					$info_insert3 = get_inpost_arr("impv_info3");
+					$info_insert3['pid']	= get_inpost('impv_pid3[pid]');	
+					$info_insert3['tel_no']	= get_inpost('fnrl_info[req_pers_aprv_tel_no_mobile]');	
+					$info_insert3['pren_code']	= get_inpost('impv_info3[pren_code]');				
+					unset($info_insert3['pren_name']);			
+					$this->common_model->update("pers_info",$info_insert3,array('pers_id'=>$row['req_pers_aprv_pers_id']));//name 2
+					
+					///////////////addr3/////////////////////
+					$data_addr3 = get_inpost_arr('impv_addr3');
+					$data_addr3['update_user_id']		= getUser();
+					$data_addr3['update_datetime']	= getDatetime();
+					$data_addr3['update_org_id'] 		= get_session('org_id');
+					$this->common_model->update('pers_addr',$data_addr3,array('addr_id'=>$req_addr_info3['reg_addr_id']));
+					
+					////////////////////name5/////////////////////////						
+					$info_insert5 = array();
+					$info_insert5 = get_inpost_arr("impv_info5");
+					$info_insert5['pid']	= get_inpost('impv_pid5[pid]');
+					$info_insert5['tel_no']	= get_inpost('fnrl_info[not_survey_aprv_tel_no_mobile]');
+					$info_insert5['pren_code']	= get_inpost('impv_info5[pren_code]');				
+					unset($info_insert5['pren_name']);	
+					//print_r($row['not_survey_aprv_pers_id']);exit();
+					$this->common_model->update("pers_info",$info_insert5,array('pers_id'=>$row['not_survey_aprv_pers_id']));//name 2
+					
+					///////////////addr5/////////////////////
+					$data_addr5 = get_inpost_arr('impv_addr5');
+					$data_addr5['update_user_id']		= getUser();
+					$data_addr5['update_datetime']	= getDatetime();
+					$data_addr5['update_org_id'] 		= get_session('org_id');
+					$this->common_model->update('pers_addr',$data_addr5,array('addr_id'=>$req_addr_info4['reg_addr_id']));
+					
+					
+					if(get_inpost('elder_addr_chk')!='on') {
+						//add new addr
+						$data_update_addr = get_inpost_arr('pers_addr');
+						$data_update_addr['update_user_id']		= getUser();
+						$data_update_addr['update_user_id']	= getDatetime();
+
+						$this->common_model->update('pers_addr',$data_update_addr,array('addr_id'=>get_inpost('pre_addr_id')));
+
+					}else{
+						$data_update_addr = get_inpost_arr('pers_addr');
+						$data_update_addr['addr_home_no']		= get_inpost('addr_home_id'); 
+						$data_update_addr['addr_moo']		= get_inpost('addr_moo_id');  /// $houseNo; 
+						$data_update_addr['addr_alley']		= get_inpost('pers_addr[addr_alley]'); 
+						$data_update_addr['addr_lane']		= get_inpost('pers_addr[addr_lane]');
+						$data_update_addr['addr_road']		= get_inpost('pers_addr[addr_road]');
+						$data_update_addr['update_user_id']		= getUser();
+						$data_update_addr['update_user_id']	= getDatetime();
+
+						$this->common_model->update('pers_addr',$data_update_addr,array('addr_id'=>get_inpost('pre_addr_id')));
+
+						//$data_update_pers['pre_addr_id'] = $data_update_pers['reg_addr_id'];
+					}
+					
+					$data_update_pers['tel_no']             = get_inpost('pers_info[tel_no]');
+					unset($data_update_pers['tel_no_mobile']);
+					unset($data_update_pers['reg_addr_id']);
+					$data_update_pers['update_user_id'] 	= getUser();
+					$data_update_pers['update_org_id'] 		= get_session('org_id');
+					$data_update_pers['update_datetime'] 	= getDatetime();
+					
+					$this->common_model->update('pers_info',$data_update_pers,array('pers_id'=>$row['pers_id']));
+					// print_r($data_update_pers);exit();
+					$req_pers_aprv_pers_info = array(
+													// 'tel_no_home' => get_inpost('fnrl_info[req_pers_aprv_tel_no_home]'),
+													'tel_no' 			=> get_inpost('fnrl_info[req_pers_aprv_tel_no_mobile]'),
+													'email_addr'	    => get_inpost('fnrl_info[req_pers_aprv_email_addr]'),
+													'update_user_id' 	=> getUser(),
+													'update_org_id' 	=> get_session('org_id'),
+													'update_datetime' 	=> getDatetime(),
+												);
+												
+					$this->common_model->update('pers_info',$req_pers_aprv_pers_info,array('pers_id'=>$row['req_pers_aprv_pers_id']));
+
+					$not_survey_aprv_pers_info = array(
+														// 'tel_no_home' => get_inpost('fnrl_info[not_survey_aprv_tel_no_home]'),
+														'tel_no' 			=> get_inpost('fnrl_info[not_survey_aprv_tel_no_mobile]'),
+														'email_addr' 		=> get_inpost('fnrl_info[not_survey_aprv_email_addr]'),
+														'update_user_id' 	=> getUser(),
+														'update_org_id' 	=> get_session('org_id'),
+														'update_datetime' 	=> getDatetime(),
+													);
+					$this->common_model->update('pers_info',$not_survey_aprv_pers_info,array('pers_id'=>$row['not_survey_aprv_pers_id']));
+					
+					///////////////////////////////////////////
+					$sms_status  = $this->input->post("sms");
+					if($sms_status == "true"){
+						$msg = "รับคำขอของท่านแล้ว ขณะนี้อยู่ระหว่างพิจารณาคำขอ";
+						$no = get_inpost('fnrl_info[req_tel_no_mobile]');
+						$page=1;
+						$this->send_sms($no,$msg,$fnrl_id,$page);
+					}
+
+					$this->session->set_flashdata('msg',setMsg('021')); //Set Message code 021
+
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+					// dieArray($data_update);
+					redirect('funeral/assist2/Edit/'.$fnrl_id,'refresh');
+				}else {
+
+
+					$this->session->set_flashdata('msg',setMsg('022')); //Set Message code 022
+					$this->template->load('index_page',$data,'funeral');
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+				}
+
+			}else if($process_action=='Delete' && $usrpm['perm_status']=='Yes') { //Delete process
+				$data_update = array();
+				$data_update['delete_user_id'] 	= getUser();
+				$data_update['delete_org_id']		= get_session('org_id');
+				$data_update['delete_datetime'] = getDatetime();
+
+				$this->common_model->update('fnrl_info',$data_update,array('fnrl_id'=>$fnrl_id));
+				$this->session->set_flashdata('msg',setMsg('031')); //Set Message code 031
+				$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+				redirect('funeral/funeral_list','refresh');
+			}else {
+				page500();
+				$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+			}
+
+		}
+
+	}
+
+	public function assist2($process_action='Add',$fnrl_id=0) { //ข้อมูลการสงเคราห์
+		$data = array(); //Set Initial Variable to Views
+		/*-- Initial Data for Check User Permission --*/
+		$user_id = get_session('user_id');
+		$app_id = 23;
+		$process_path = 'funeral/assist2';
+		/*--END Inizial Data for Check User Permission--*/
+
+		$this->webinfo_model->LogSave($app_id,$process_action,'Sign In','Success'); //Save Sign In Log
+		$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id,$user_id); //Check User Permission
+
+		if($usrpm['perm_status']=='No' || !isset($usrpm['app_id'])){
+			page500();
+			echo $user_id;
+			$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+		}else {
+			$app_name 					= $usrpm['app_name'];
+			$data['usrpm'] 			= $usrpm;
+			$data['user_id'] 		= $user_id;
+
+			$this->load->library('template',
+				array('name'=>'admin_template1',
+					  'setting'=>array('data_output'=>''))
+			); // Set Template
+
+      /*-- datepicker --*/
+      //set_css_asset_head('../plugins/bootstrap-datepicker1.3.0/css/datepicker.css');
+      //set_js_asset_head('../plugins/bootstrap-datepicker1.3.0/js/bootstrap-datepicker.js');
+      /*-- End datepicker --*/
+
+      /*-- datepicker custom --*/
+		//   set_css_asset_head('../plugins/bootstrap-datepicker-custom/dist/css/bootstrap-datepicker.css');
+		//   set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-custom.js');
+		//   set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/locales/bootstrap-datepicker.th.min.js');
+		set_css_asset_head('../plugins/bootstrap-datepicker1.9.0/css/bootstrap-datepicker.css');
+		set_js_asset_head('../plugins/bootstrap-datepicker1.9.0/js/bootstrap-datepicker.js');
+		set_js_asset_head('../plugins/bootstrap-datepicker-custom/dist/js/bootstrap-datepicker-BE.js');
+		
+		/*-- End datepicker custom--*/
+
+  		/*-- Toastr style --*/
+  		set_css_asset_head('../plugins/Static_Full_Version/css/plugins/toastr/toastr.min.css');
+  		set_js_asset_footer('../plugins/Static_Full_Version/js/plugins/toastr/toastr.min.js');
+  		/*-- End Toastr style --*/
+
+			set_js_asset_footer('assist2.js','funeral'); //Set JS sufferer_form1.js
+
+			$data['process_action'] = $process_action;
+			$data['content_view'] 	= 'assist2';
+
+			$tmp = $this->admin_model->getOnce_Application($usrpm['app_parent_id']); //Used for find root application
+			$data['head_title'] = $tmp['app_name'];
+			$data['title'] 			= $usrpm['app_name'];
+
+			$data['csrf'] = array(
+				'name' => $this->security->get_csrf_token_name(),
+				'hash' => $this->security->get_csrf_hash()
+			);
+			// dieArray($usrpm);
+			if($process_action=='Edit' && get_inpost('bt_submit')=='' && $usrpm['perm_status']=='Yes') {
+				$row = rowArray($this->common_model->custom_query("
+					SELECT * FROM fnrl_info
+					WHERE delete_user_id IS NULL
+					AND (delete_datetime IS NULL || delete_datetime = '0000-00-00 00:00:00')
+					AND fnrl_id = {$fnrl_id}
+	        ORDER BY update_datetime DESC,insert_datetime DESC
+				"));
+				// dieArray($row);
+				if(isset($row['fnrl_id'])) {
+
+					$data['fnrl_info'] 				= $row;
+					if($row['date_of_pay']!='') {
+						$tmp = explode('-',$row['date_of_pay']);
+						$data['fnrl_info']['date_of_pay'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}else{
+						$data['fnrl_info']['date_of_pay'] = date("d-m-Y");
+					}
+
+					if($row['date_of_receipt']!='') {
+						$tmp = explode('-',$row['date_of_receipt']);
+						$data['fnrl_info']['date_of_receipt'] = $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+					}else{
+						$data['fnrl_info']['date_of_receipt'] = date("d-m-Y");
+					}
+
+					$this->template->load('index_page',$data,'funeral');
+				}else {
+					page500();
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+				}
+
+			}else if($process_action=='Edited' && get_inpost('bt_submit')!='' && $usrpm['perm_status']=='Yes') { //Edit && Submit Form
+				$process_action='Edited';
+				// dieArray($_POST);
+				$this->load->library('form_validation');
+				$frm=$this->form_validation;
+
+				//$frm->set_rules('fnrl_info[date_of_pay]','วันที่รับเงิน','required|callback_date_check');
+				// $frm->set_rules('fnrl_info[date_of_receipt]','วันที่ออกใบสำคัญรับเงิน','required|callback_date_check');
+				// $frm->set_rules('fnrl_info[pay_amount]','จำนวนเงินที่สงเคราะห์','required');
+				// $frm->set_rules('fnrl_info[payee_type]','ผู้รับเงิน','required');
+
+				// $frm->set_message("required","กรุณากรอกข้อมูล %s");
+				// $frm->set_message("numeric","%s ต้องเป็นตัวเลข");
+				// $frm->set_message("date_check","%s รูปบบของวันที่ต้องถูกต้อง");
+
+				// dieArray($_POST);
+				//if($frm->run($this)){//Valid Data
+
+					// fnrl_info
+					$data_update = get_inpost_arr('fnrl_info');
+					//$data_update['date_of_pay'] 		= dateChange($data_update['date_of_pay']);
+					// $data_update['date_of_receipt'] = dateChange($data_update['date_of_receipt'],4);
+					if($data_update['cond_status'] == "อนุมัติ"){
+						$data_update['date_of_pay'] = dateChange($data_update['date_of_pay']);
+					}else{
+						$data_update['date_of_pay'] = null ;
+					}
+
+					$data_update['update_user_id'] 	= getUser();
+					$data_update['update_org_id'] 	= get_session('org_id');
+					$data_update['update_datetime'] = getDatetime();
+
+					$this->common_model->update('fnrl_info',$data_update,array('fnrl_id'=>$fnrl_id));
+
+					
+					$sms_status  = $this->input->post("sms");
+					if($sms_status == "true"){
+						$page=2;
+						$row = rowArray($this->common_model->custom_query("
+						SELECT * FROM fnrl_info
+						WHERE delete_user_id IS NULL
+						AND (delete_datetime IS NULL || delete_datetime = '0000-00-00 00:00:00')
+						AND fnrl_id = {$fnrl_id}
+						ORDER BY update_datetime DESC,insert_datetime DESC
+						"));
+						$person =  $this->personal_model->getOnce_PersonalInfo($row['req_pers_id']);
+						$no = $person['tel_no'];
+					   if(get_inpost('fnrl_info[cond_status]')=='อนุมัติ'){
+						   $msg = "คำขอได้รับการอนุมัติ หากโอนเงินแล้วระบบจะส่งข้อความแจ้งเตือนอีกครั้ง";
+					   }
+					   else{
+						   $msg = "คำขอของท่านถูกปฏิเสธ กรุณาติดต่อหน่วยงานที่รับเรื่อง";
+					   }
+					   //$msg = $sms_status;
+					   $this->send_sms($no,$msg,$fnrl_id,$page);
+				   }
+					$this->session->set_flashdata('msg',setMsg('021')); //Set Message code 021
+					$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Success'); //Save Sign Out Log
+					//redirect('funeral/assist2/Edit/'.$fnrl_id,'refresh');
+					redirect('funeral/funeral_list','refresh');
+				// }else {
+				// 	$data['fnrl_info'] = get_inpost_arr('fnrl_info');
+				// 	$this->session->set_flashdata('msg',setMsg('022')); //Set Message code 022
+				// 	$this->template->load('index_page',$data,'funeral');
+				// 	$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+				// }
+
+			}else {
+				page500();
+				$this->webinfo_model->LogSave($app_id,$process_action,'Sign Out','Fail'); //Save Sign Out Log
+			}
+		}
+	}
+
+
+	public function getDataDead() { 
+		$input = $this->input->post();		
+		$rs = $this->common_model->getDead($input['req_id']);
+
+		$this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($rs));
+
+	}
+}
