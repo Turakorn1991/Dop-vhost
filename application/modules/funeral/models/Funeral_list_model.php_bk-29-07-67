@@ -43,8 +43,6 @@ class Funeral_list_model extends CI_Model
 			,B.date_of_birth
 			,B.date_of_death
 			,CHA.chn_name
-			,org.org_short_title
-			,org.org_title
 			");
 		}
 		
@@ -52,7 +50,6 @@ class Funeral_list_model extends CI_Model
 		$this->db->join('std_req_channel as CHA', 'A.chn_code = CHA.chn_code', 'left');
 		$this->db->join('pers_info as B', 'A.pers_id = B.pers_id', 'left');
 		$this->db->join('std_prename as PRE', 'B.pren_code = PRE.pren_code', 'left');
-		$this->db->join('usrm_org as org', 'A.insert_org_id = org.org_id', 'left');
 
 		if($perm_view == "Organization" || $perm_view == "All"){		
 			$this->db->join('pers_addr as H', 'B.pre_addr_id = H.addr_id', 'left');	
@@ -140,7 +137,7 @@ class Funeral_list_model extends CI_Model
 			if($parameter['condstatus'] != ""){
 				switch ($parameter['condstatus']) {
 					case "1":
-						$this->db->where("((A.cond_status IS NULL OR A.cond_status = '' ) AND (A.date_of_pay ='' OR A.date_of_pay IS NULL ))");
+						$this->db->where("(A.date_of_pay ='' OR A.date_of_pay IS NULL )");
 					  break;
 					case "2":
 						$this->db->where("(A.date_of_pay !='' OR A.date_of_pay IS NOT NULL )");
@@ -148,11 +145,11 @@ class Funeral_list_model extends CI_Model
 					case "3":
 						$is_where_date_of_pay = false;
 						if($date_of_pay_start_str != "" && $date_of_pay_end_str != ""){
-							$this->db->where("( ((A.cond_status IS NULL OR A.cond_status = '' ) AND (A.date_of_pay ='' OR A.date_of_pay IS NULL )) OR (A.date_of_pay >= '".$date_of_pay_start_str ."' AND A.date_of_pay <= '".$date_of_pay_end_str."'))");
+							$this->db->where("( (A.date_of_pay ='' OR A.date_of_pay IS NULL ) OR (A.date_of_pay >= '".$date_of_pay_start_str ."' AND A.date_of_pay <= '".$date_of_pay_end_str."') )");
 						}else if($date_of_pay_start_str == "" && $date_of_pay_end_str != ""){
-							$this->db->where("( ((A.cond_status IS NULL OR A.cond_status = '' ) AND (A.date_of_pay ='' OR A.date_of_pay IS NULL )) OR (A.date_of_pay <= '".$date_of_pay_end_str."'))");
+							$this->db->where("( (A.date_of_pay ='' OR A.date_of_pay IS NULL ) OR (A.date_of_pay <= '".$date_of_pay_end_str."') )");
 						}else if($date_of_pay_start_str != "" && $date_of_pay_end_str == ""){
-							$this->db->where("( ((A.cond_status IS NULL OR A.cond_status = '' ) AND (A.date_of_pay ='' OR A.date_of_pay IS NULL )) OR (A.date_of_pay >= '".$date_of_pay_start_str ."'))");
+							$this->db->where("( (A.date_of_pay ='' OR A.date_of_pay IS NULL ) OR (A.date_of_pay >= '".$date_of_pay_start_str ."') )");
 						}
 					  break;
 					case "4":
@@ -180,36 +177,14 @@ class Funeral_list_model extends CI_Model
 		//หน่วยงาน (ผู้บันทึกข้อมูล):
 		if($perm_view == "All"){
 			if($filter_org_id != ""){
-				if($filter_org_id == 174){ //โกลด์แอปพลิเคชั่น
-					$this->db->where("A.insert_org_id=174");
-				}else if($filter_org_id == 123){//กรุงเทพมหานคร
-					$this->db->where("(
-										A.insert_org_id = 123 
-										OR 
-										(A.insert_org_id in (select org_id from usrm_org where org_parent_id = 123))
-									 	OR
-										(A.insert_org_id = 174 AND A.update_org_id in (select org_id from usrm_org where org_parent_id = 123))
-									   )");
-				}else if($filter_org_id == 1 || $filter_org_id == 2){ //กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์ | สำนักงานปลัดกระทรวง
-					$this->db->where("(
-						(A.insert_org_id = 1 OR  A.insert_org_id = 2)
-						OR 
-						(A.insert_org_id in (select org_id from usrm_org where org_parent_id = 2))
-						OR
-						(A.insert_org_id = 174 AND A.update_org_id in (select org_id from usrm_org where org_parent_id = 2))
-						OR
-						(A.insert_org_id = 174 AND H.addr_province in (select province_code from usrm_org_province where org_parent_id = 2 and province_code is not null ))
-					 )");
-				}else{
-					if (isset($org_id)) {
-						$whereGoalApp = "";
-						$provineCodeWhere = $this->admin_model->MapOrgIdToProvinceCode($filter_org_id);
-						if ($provineCodeWhere != "" && $provineCodeWhere != null) {
-							$whereGoalApp = " OR (A.insert_org_id = 174 AND H.addr_province = " . $provineCodeWhere . ")";
-						}
+				$whereGoalApp = "";
+				if (isset($org_id)) {
+					$provineCodeWhere = $this->admin_model->MapOrgIdToProvinceCode($filter_org_id);
+					if ($provineCodeWhere != "" && $provineCodeWhere != null) {
+						$whereGoalApp = " OR (A.insert_org_id = 174 AND H.addr_province = " . $provineCodeWhere . ")";
 					}
-					$this->db->where("( (A.insert_org_id =" . $filter_org_id .") OR (A.insert_org_id = 174 AND A.update_org_id =".$filter_org_id.")". $whereGoalApp . ")");
 				}
+				$this->db->where("( (A.insert_org_id =" . $filter_org_id .") OR (A.insert_org_id = 174 OR A.update_org_id =".$filter_org_id.")". $whereGoalApp . ")");
 			}
 		}
 		else if ($perm_view == "Organization") {
@@ -229,7 +204,7 @@ class Funeral_list_model extends CI_Model
 		$this->db->where("(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
 
 		//เรียงลำดับ
-		$this->db->order_by('A.date_of_pay ASC , A.date_of_req ASC');
+		$this->db->order_by("A.date_of_pay ASC , A.date_of_req ASC");
 	}
 
 	// private function _get_datatables_query()

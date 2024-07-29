@@ -35,13 +35,12 @@ $(document).ready(function () {
   onBinding(genParameterFilter());
 
   $("#filtersearch").on('click', function () {
-    
     if(initRequiredFilterPay()){
-      if($(".filter-pay-start").val() == ""){
+      if($(".filter-pay-start").val == ""){
         alert("กรุณาเลือกวันที่เริ่มต้น วันที่ได้รับการสงเคราะห์");
         return;
       }
-      if($(".filter-pay-end").val() == ""){
+      if($(".filter-pay-end").val == ""){
         alert("กรุณาเลือกวันที่สิ้นสุด วันที่ได้รับการสงเคราะห์");
         return;
       }
@@ -150,25 +149,38 @@ var opn = function (node) {
 
 // Export Excel
 var exportExcel = function (type) {
-  var form = document.createElement("form");
-  form.setAttribute('method', "post");
-  if (type == 0) {
-    form.setAttribute('action', export_url);
-  } else {
-    form.setAttribute('action', export_url_ktb);
-  }
-  let icsrfdop = document.createElement("input");
-  icsrfdop.setAttribute('type', "hidden");
-  icsrfdop.setAttribute('name', "csrf_dop");
-  icsrfdop.setAttribute('value', csrf_hash);
-  form.appendChild(icsrfdop);
-  let param = document.createElement("input");
-  param.setAttribute('type', "hidden");
-  param.setAttribute('name', "parameter_filter");
-  param.setAttribute('value', genParameterFilter());
-  form.appendChild(param);
-  document.body.appendChild(form);
-  form.submit();
+  // var form = document.createElement("form");
+  // form.setAttribute('method', "post");
+  // if (type == 0) {
+  //   form.setAttribute('action', export_url);
+  // } else {
+  //   form.setAttribute('action', export_url_ktb);
+  // }
+
+  // columnDefs.forEach(element => {
+  //   var i = document.createElement("input"); //input element, text
+  //   i.setAttribute('type', "hidden");
+  //   i.setAttribute('name', "columns[" + element.targets + "][data]");
+  //   i.setAttribute('value', element.targets);
+  //   form.appendChild(i);
+  //   i = document.createElement("input"); //input element, text
+  //   i.setAttribute('type', "hidden");
+  //   i.setAttribute('name', "columns[" + element.targets + "][name]");
+  //   i.setAttribute('value', element.name);
+  //   form.appendChild(i);
+  //   i = document.createElement("input"); //input element, text
+  //   i.setAttribute('type', "hidden");
+  //   i.setAttribute('name', "columns[" + element.targets + "][search][value]");
+  //   i.setAttribute('value', $("#col" + element.targets + "_filter").val());
+  //   form.appendChild(i);
+  //   i = document.createElement("input"); //input element, text
+  //   i.setAttribute('type', "hidden");
+  //   i.setAttribute('name', "csrf_dop");
+  //   i.setAttribute('value', csrf_hash);
+  //   form.appendChild(i);
+  // });
+  // document.body.appendChild(form);
+  // form.submit();
 }
 
 // Export Excel

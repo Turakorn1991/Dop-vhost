@@ -11,14 +11,8 @@ class ReportC0 extends Main_Controller {
     public function __construct(){
         parent::__construct();
         $filter = $this->getFilter();
-        $data['rows'] = array();
-        if(isset($filter['parameter_filter'])){
-            $parameterfilter = json_decode($filter['parameter_filter'], TRUE);
-            $data['rows']=$this->report_mock->reportC0($parameterfilter);
-        }else{
-            die('ไม่พบข้อมูล Parameter');
-        }
-        
+        print_r($filter);exit();
+        $data['rows']=$this->report_mock->reportC0($filter);
         $data['headers']=array(
             'ข้อมูลการสงเคราะห์ในการจัดการงานศพผู้สูงอายุตามประเพณี' ,
             'กรมกิจการผู้สูงอายุ กระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์' ,

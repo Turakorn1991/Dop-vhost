@@ -1,4 +1,3 @@
-var parameterFilter={};
 var table;
 var columnDefs = [{
     "name": "B.pid",
@@ -7,6 +6,11 @@ var columnDefs = [{
   {
     "name": "CONCAT(B.pers_firstname_th,' ', B.pers_lastname_th)",
     "targets": 2
+  },
+  {
+    "name": "D.gender_code",
+    "targets": 3,
+    "visible": false
   },
   {
     "name": "B.date_of_birth",
@@ -28,65 +32,16 @@ var columnDefs = [{
   {
     "name": "end_age",
     "targets": 8
+  },
+  {
+    "name": "I.org_title",
+    "targets": 10,
+    "visible": false
   }
 ];
 $(document).ready(function () {
 
-  onBinding(genParameterFilter());
-
-  $("#filtersearch").on('click', function () {
-    
-    if(initRequiredFilterPay()){
-      if($(".filter-pay-start").val() == ""){
-        alert("กรุณาเลือกวันที่เริ่มต้น วันที่ได้รับการสงเคราะห์");
-        return;
-      }
-      if($(".filter-pay-end").val() == ""){
-        alert("กรุณาเลือกวันที่สิ้นสุด วันที่ได้รับการสงเคราะห์");
-        return;
-      }
-
-    }
-    onBinding(genParameterFilter());
-  });
-
-
-  $("#dtable_filter").hide();
-
-  $("#guide-book").click(function () {
-    window.open('/assets/modules/funeral/guide/Fnrl_Manual.pdf', '_blank');
-  });
-
-});
-
-// function filterColumn(i) {
-//   console.log("filterColumn");
-//   $('#dtable').DataTable().column(i).search(
-//     $('#col' + i + '_filter').val()
-//   ).draw();
-
-// }
-
-function genParameterFilter() {
-  parameterFilter.pid = $(".filter-pid").val();
-  if ($('.filter-disablepid').is(":checked")){
-    parameterFilter.disablepid = 1;
-  }else{
-    parameterFilter.disablepid = 0;}
-  parameterFilter.fullname = $(".filter-fullname").val();
-  parameterFilter.gender = $(".filter-gender").val();
-  parameterFilter.condstatus = $(".filter-status").val();
-  parameterFilter.reqdatestart = $(".filter-req-start").val();
-  parameterFilter.reqdateend = $(".filter-req-end").val();
-  parameterFilter.paydatestart = $(".filter-pay-start").val();
-  parameterFilter.paydateend = $(".filter-pay-end").val();
-  parameterFilter.usrmorg = $(".filter-usrm-org").val();  
-
-  return JSON.stringify(parameterFilter);
-}
-
-function onBinding(parameterFilterStr) {
-  $('#dtable').DataTable({
+  table = $('#dtable').DataTable({
     "processing": true, //Feature control the processing indicator.
     "serverSide": true, //Feature control DataTables' server-side processing mode.
     // Load data for the table's content from an Ajax source
@@ -94,7 +49,6 @@ function onBinding(parameterFilterStr) {
       "url": dtable_url,
       "type": "POST",
       data: {
-        'parameter_filter':parameterFilterStr,
         'request': 'get_users_invoices',
         'csrf_dop': csrf_hash
       },
@@ -104,9 +58,8 @@ function onBinding(parameterFilterStr) {
     "order": [
       [0, "desc"]
     ],
-    "destroy": true,
+
     "bSort": false,
-    "searching": false,
     "bLengthChange": false,
     "pageLength": 50,
     "responsive": true,
@@ -130,25 +83,67 @@ function onBinding(parameterFilterStr) {
         "sLast": '<i class="fa fa-step-forward" style="font-size: 12px;" aria-hidden="true"></i>'
       }
     }
-  });
-}
 
+  });
+
+
+  function filterColumn(i) {
+    $('#dtable').DataTable().column(i).search(
+      $('#col' + i + '_filter').val()
+    ).draw();
+
+  }
+
+  $("#filtersearch").on('click', function () {
+    $('#dtable').DataTable().search('').columns().search('').draw();
+    $('.column_filter').each(function () {
+      if ($(this).val() != '') {
+        filterColumn($(this).data('column'));
+      }
+    });
+  });
+
+
+  $("#dtable_filter").hide();
+  $("#guide-book").click(function () {
+    window.open('/assets/modules/funeral/guide/Fnrl_Manual.pdf', '_blank');
+  });
+
+
+
+});
 
 $('#dltModel').on('show', function () {
   var id = $(this).data('id'),
     removeBtn = $(this).find('.danger');
 });
 
+//$('.confirm-delete').on('click', function(e) {e.preventDefault();var id = $(this).data('id');$('#myModal').data('id', id).modal('show');});
+
 $('#btnYes').click(function () {
   window.location.replace(base_url + 'funeral/inform1' + '/Delete/' + $('#dltModel').data('id'));
 });
+
 
 var opn = function (node) {
   var id = $(node).data('id');
   $('#dltModel').data('id', id).modal('show');
 }
 
+/*$('#dtable').on('click', 'td button.lnk', function () {
+
+  console.log($(this).data('info'));
+        var data_info = $(this).data('info');
+        $.each(data_info, function(key,val) {
+            $("."+key).html(val );
+            //console.log(key+': '+val);
+        });
+
+  $("#info").modal('show');
+  //$('.m'+($(this).parent().parent().index()+1)).modal("show");
+});*/
 // Export Excel
+
 var exportExcel = function (type) {
   var form = document.createElement("form");
   form.setAttribute('method', "post");
@@ -157,16 +152,29 @@ var exportExcel = function (type) {
   } else {
     form.setAttribute('action', export_url_ktb);
   }
-  let icsrfdop = document.createElement("input");
-  icsrfdop.setAttribute('type', "hidden");
-  icsrfdop.setAttribute('name', "csrf_dop");
-  icsrfdop.setAttribute('value', csrf_hash);
-  form.appendChild(icsrfdop);
-  let param = document.createElement("input");
-  param.setAttribute('type', "hidden");
-  param.setAttribute('name', "parameter_filter");
-  param.setAttribute('value', genParameterFilter());
-  form.appendChild(param);
+
+  columnDefs.forEach(element => {
+    var i = document.createElement("input"); //input element, text
+    i.setAttribute('type', "hidden");
+    i.setAttribute('name', "columns[" + element.targets + "][data]");
+    i.setAttribute('value', element.targets);
+    form.appendChild(i);
+    i = document.createElement("input"); //input element, text
+    i.setAttribute('type', "hidden");
+    i.setAttribute('name', "columns[" + element.targets + "][name]");
+    i.setAttribute('value', element.name);
+    form.appendChild(i);
+    i = document.createElement("input"); //input element, text
+    i.setAttribute('type', "hidden");
+    i.setAttribute('name', "columns[" + element.targets + "][search][value]");
+    i.setAttribute('value', $("#col" + element.targets + "_filter").val());
+    form.appendChild(i);
+    i = document.createElement("input"); //input element, text
+    i.setAttribute('type', "hidden");
+    i.setAttribute('name', "csrf_dop");
+    i.setAttribute('value', csrf_hash);
+    form.appendChild(i);
+  });
   document.body.appendChild(form);
   form.submit();
 }

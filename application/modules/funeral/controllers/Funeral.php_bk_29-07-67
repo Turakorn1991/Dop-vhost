@@ -257,9 +257,7 @@ class Funeral extends MX_Controller
 
 				$row[] = $funeral->pid;
 				$row[] = $funeral->prename_th . $funeral->name;
-				// $row[] = $funeral->gender_code;
-
-				//อายุ
+				$row[] = $funeral->gender_code;
 				$age = '';
 				//fixing
 				if ($funeral->date_of_birth != '' && checkdate(iconv_substr($funeral->date_of_birth, 5, 2, 'utf-8'), iconv_substr($funeral->date_of_birth, 8, 2, 'utf-8'), iconv_substr($funeral->date_of_birth, 0, 4, 'utf-8'))) {
@@ -283,6 +281,8 @@ class Funeral extends MX_Controller
 					$interval = $now->diff($date);
 					$age = $interval->y;
 				}
+
+
 				$row[] = "<center>" . $age . "</center>";
 
 
@@ -293,8 +293,8 @@ class Funeral extends MX_Controller
 				}
 				$row[] = "<center>" . $date_of_req . "</center>";
 
-				//วันที่ได้รับการสงเคราะห์
 				$date_of_pay = '';
+
 				if ($funeral->date_of_pay != '' && $funeral->date_of_pay != '0000-00-00') {
 					$date_of_pay = '<font class="text-sucsess" color="#18bd15">' . dateChange($funeral->date_of_pay, 5) . '</font>';
 				} else if ($funeral->cond_status == 'ปฎิเสธ') {
@@ -303,39 +303,37 @@ class Funeral extends MX_Controller
 					$date_of_pay = '<font class="text-sucsess" color="#B9B9B9">รอช่วยเหลือ</font>';
 				}
 				$row[] = "<center>" . $date_of_pay . "</center>";
-
-				//จำนวนที่ได้รับการสงเคราะห์ (บาท)
 				$row[] = "<div style='width:100%;text-align:right;'>" . number_format($funeral->pay_amount, 2) . "</div>";
 
-				//หน่วยงาน
-				if ($funeral->insert_org_id == '174' || $funeral->insert_org_id == 174) {
-					if ($funeral->update_org_id != null && $funeral->update_org_id != '') {
-						$orgU = $this->difficult_model->getOrg($funeral->update_org_id);
-						if($orgU != null){
-							if ($orgU['org_short_title'] != '') {
-								$row[] = $orgU['org_short_title'];
-							} else {
-								$row[] = $orgU['org_title'];
-							}
-						}else{
-							$row[] = "";
-						}	
+				$org_id = $funeral->insert_org_id;
+				$org_Update_id = $funeral->update_org_id;
+				if ($org_id == '174') {
+					if ($org_Update_id != null && $org_Update_id != '') {
+						$orgU = $this->difficult_model->getOrg($org_Update_id);
+						if ($orgU['org_short_title'] != '') {
+							$row[] = $orgU['org_short_title'];
+						} else {
+							$row[] = $orgU['org_title'];
+						}
 					} else {
-						if($funeral->org_short_title == "" || $funeral->org_short_title == null){
-							$row[] = '<font class="text-sucsess" color="#B9B9B9">' . $funeral->org_title . '</font>';
-						}else{
-							$row[]  = '<font class="text-sucsess" color="#B9B9B9">' . $funeral->org_short_title . '</font>';
+						$org2 = $this->difficult_model->getOrg($org_id);
+						if ($org2['org_short_title'] != '') {
+							$row[]  = '<font class="text-sucsess" color="#B9B9B9">' . $org2['org_short_title'] . '</font>';
+						} else {
+							$row[]  = '<font class="text-sucsess" color="#B9B9B9">' . $org2['org_title'] . '</font>';
 						}
 					}
 				} else {
-					if($funeral->org_short_title == "" || $funeral->org_short_title == null){
-						$row[] = $funeral->org_title;
-					}else{
-						$row[] = $funeral->org_short_title;
+					$org = $this->difficult_model->getOrg($org_id);
+					if ($org['org_short_title'] != '') {
+						$row[] = $org['org_short_title'];
+					} else {
+						$row[] = $org['org_title'];
 					}
 				}
 
-				//Btn Action
+
+
 				$tmp = $this->admin_model->getOnce_Application(22);
 				$tmp1 = $this->admin_model->chkOnce_usrmPermiss(22, $user_id); //Check User Permission
 				$btn = '';
@@ -451,9 +449,6 @@ class Funeral extends MX_Controller
 
 
 				$row[] = "<center>" . $btn . "</center>";
-				//Btn Action
-
-				//ช่องทาง
 				$row[] = "<center>" . $funeral->chn_name . "</center>";
 				$data[] = $row;
 			}

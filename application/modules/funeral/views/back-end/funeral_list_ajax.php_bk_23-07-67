@@ -61,7 +61,7 @@
             <th style="width:2% !important;">#</th>
             <th style="width:17% !important;">เลขประจำตัว ปชช.</th>
             <th style="width:25% !important;">ชื่อตัว-ชื่อสกุล <br>(ผู้สูงอายุผู้เสียชีวิต)</th>
-            <!-- <th>เพศ</th> -->
+            <th>เพศ</th>
             <th style="width:7% !important;">อายุ (ปี)</th>
             <th style="width:10% !important;">วันที่ยื่นคำขอ</th>
             <th style="width:10% !important;">วันที่ได้รับ <br>การสงเคราะห์</th>
@@ -69,7 +69,7 @@
            
             <th style="width:10% !important;">หน่วยงาน</th>
             <th style="width:1% !important;">&nbsp;</th>
-            <!-- <th style="width:10% !important;">ช่องทางแจ้งเรื่อง</th> -->
+            <th style="width:10% !important;">ช่องทางแจ้งเรื่อง</th>
             
         </tr>
       </thead>
