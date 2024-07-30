@@ -582,7 +582,7 @@ class Report_model extends CI_Model{
         A.date_of_req,
         A.date_of_pay,
         A.req_pers_aprv_pers_id,
-        A.req_pers_aprv_org,
+        A.req_pers_aprv_position,
         A.pay_amount,
         A.payee_type,
         A.pay_channel,
@@ -596,7 +596,11 @@ class Report_model extends CI_Model{
         BB.pers_firstname_th as req_pers_pers_firstname_th,
         BB.pers_lastname_th as req_pers_pers_lastname_th,
         BB.pid as req_pers_pid,
-        BB.reg_addr_id as req_pers_reg_addr_id
+        BB.reg_addr_id as req_pers_reg_addr_id,
+        BB.bank_acc_no as req_pers_bank_acc_no,
+        BB.email_addr as req_pers_email_addr,
+        BB.tel_no as req_pers_tel_no,
+        case when BB.bank_name = '030' then BB.bank_other else bank.bank_name end req_pers_bank_name
         ";
 
         if(!$isktb){
@@ -609,9 +613,7 @@ class Report_model extends CI_Model{
 				                      tbl_district.area_name_th as req_pers_district,
 				                      tbl_province.area_name_th as req_pers_province";
         }else{
-            $selectStr = $selectStr.",BB.bank_acc_no as req_pers_bank_acc_no,
-                                      BB.email_addr as req_pers_email_addr,
-                                      BB.tel_no as req_pers_tel_no";
+            $selectStr = $selectStr.",";
         }
         $this->db->select($selectStr);
 		$this->db->from("fnrl_info as A");
@@ -620,6 +622,7 @@ class Report_model extends CI_Model{
 		$this->db->join('pers_addr as H', 'B.pre_addr_id=H.addr_id', 'left');
         $this->db->join('usrm_org as I','A.insert_org_id=I.org_id','left');
         $this->db->join('pers_info as BB', 'A.req_pers_id=BB.pers_id', 'left');
+        $this->db->join('std_bank as bank', 'BB.bank_name=bank.bank_code', 'left');
 		$this->db->join('std_prename as CC', 'BB.pren_code=CC.pren_code', 'left');
         if(!$isktb){
             $this->db->join('pers_info as BBB', 'A.req_pers_aprv_pers_id=BBB.pers_id', 'left');

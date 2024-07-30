@@ -152,14 +152,14 @@ class Report_mock extends CI_Model
             $new=array();
             $new[]= '600';
             // $person_req = $this->report_model->getPersInfo($result->req_pers_id);
-            $new[]=$result->bank_acc_no;
-            $new[]=$result->pers_firstname_th." ".$result->pers_lastname_th;
+            $new[]=$result->req_pers_bank_acc_no;
+            $new[]=$result->req_pers_pers_firstname_th." ".$result->req_pers_pers_lastname_th;
             $new[]=number_format($result->pay_amount);
-            $new[]=$result->pid;
+            $new[]=$result->req_pers_pid;
             $new[]='';
             $new[]='';
-            $new[]=$result->email_addr;
-            $new[]=$result->tel_no;
+            $new[]=$result->req_pers_email_addr;
+            $new[]=$result->req_pers_tel_no;
             array_push($data,$new);
         }
         return $data;
@@ -194,9 +194,11 @@ class Report_mock extends CI_Model
             $new[]=$result->pid;
             // $person = $this->report_model->getPersInfoFullname($result->req_pers_aprv_pers_id);
             $new[]=$result->req_pers_aprv_prename_th." ".$result->req_pers_aprv_pers_firstname_th." ".$result->req_pers_aprv_pers_lastname_th;
-            $new[]=$result->req_pers_aprv_org;
+            $new[]=$result->req_pers_aprv_position;
             $new[]=dateTH($result->date_of_req);
             $new[]=dateTH($result->date_of_pay);
+            $new[]=!empty($result->req_pers_bank_name)?$result->req_pers_bank_name:""; 
+            $new[]=!empty($result->req_pers_bank_acc_no)?$result->req_pers_bank_acc_no:"" ; 
             $new[]=number_format($result->pay_amount);
             $new[]=$result->payee_type;
             $new[]=$result->pay_channel;
