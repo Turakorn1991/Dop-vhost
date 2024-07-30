@@ -137,7 +137,7 @@ class Report_mock extends CI_Model
     function reportC0_ktb($filter)//for excel
     {
    
-        $results = $this->report_model->getFnrlInfo($filter);
+        $results = $this->report_model->getFnrlInfo($filter,true);
         if(!$results){
             return null;
         }
@@ -151,15 +151,15 @@ class Report_mock extends CI_Model
         foreach ($rows as $index=>$result){
             $new=array();
             $new[]= '600';
-            $person_req = $this->report_model->getPersInfo($result->req_pers_id);
-            $new[]=$person_req->bank_acc_no;
+            // $person_req = $this->report_model->getPersInfo($result->req_pers_id);
+            $new[]=$result->bank_acc_no;
             $new[]=$result->pers_firstname_th." ".$result->pers_lastname_th;
             $new[]=number_format($result->pay_amount);
             $new[]=$result->pid;
             $new[]='';
             $new[]='';
-            $new[]=$person_req->email_addr;
-            $new[]=$person_req->tel_no;
+            $new[]=$result->email_addr;
+            $new[]=$result->tel_no;
             array_push($data,$new);
         }
         return $data;
@@ -181,27 +181,27 @@ class Report_mock extends CI_Model
         foreach ($rows as $index=>$result){
             $new=array();
             $new[]=$index+1;
-            $person_req = $this->report_model->getPersInfo($result->req_pers_id);
-            $new[]=$person_req->prename_th." ".$person_req->pers_firstname_th." ".$person_req->pers_lastname_th;
-            $new[]=$person_req->pid;
-            $addr = $this->report_model->getAddr($person_req->reg_addr_id);
-            $new[]=!empty($addr->addr_home_no)?$addr->addr_home_no." ":"" ;  
-            $new[]=!empty($addr->addr_moo)?$addr->addr_moo." ":"" ;  
-            $new[]=!empty($addr->locality)?$addr->locality." ":"" ;  
-            $new[]=!empty($addr->district)?$addr->district." ":"" ;  
-            $new[]=!empty($addr->province)?$addr->province." ":"" ; 
+            // $person_req = $this->report_model->getPersInfoFullname($result->req_pers_id);
+            $new[]=$result->req_pers_prename_th." ".$result->req_pers_pers_firstname_th." ".$result->req_pers_pers_lastname_th;
+            $new[]=$result->req_pers_pid;
+            // $addr = $this->report_model->getAddrSelect($result->req_pers_reg_addr_id);
+            $new[]=!empty($result->req_pers_addr_home_no)?$result->req_pers_addr_home_no." ":"" ;  
+            $new[]=!empty($result->req_pers_addr_moo)?$result->req_pers_addr_moo." ":"" ;  
+            $new[]=!empty($result->req_pers_locality)?$result->req_pers_locality." ":"" ;  
+            $new[]=!empty($result->req_pers_district)?$result->req_pers_district." ":"" ;  
+            $new[]=!empty($result->req_pers_province)?$result->req_pers_province." ":"" ; 
             $new[]=$result->prename_th." ".$result->pers_firstname_th." ".$result->pers_lastname_th;
             $new[]=$result->pid;
-            $person = $this->report_model->getPersInfo($result->req_pers_aprv_pers_id);
-            $new[]=$person->prename_th." ".$person->pers_firstname_th." ".$person->pers_lastname_th;
+            // $person = $this->report_model->getPersInfoFullname($result->req_pers_aprv_pers_id);
+            $new[]=$result->req_pers_aprv_prename_th." ".$result->req_pers_aprv_pers_firstname_th." ".$result->req_pers_aprv_pers_lastname_th;
             $new[]=$result->req_pers_aprv_org;
             $new[]=dateTH($result->date_of_req);
             $new[]=dateTH($result->date_of_pay);
             $new[]=number_format($result->pay_amount);
             $new[]=$result->payee_type;
             $new[]=$result->pay_channel;
-            $org=$this->report_model->getOrg($result->insert_org_id);
-            $new[]=$org->org_title;
+            // $org=$this->report_model->getOrg($result->insert_org_id);
+            $new[]=$result->org_title;
             array_push($data,$new);
         }
         return $data;

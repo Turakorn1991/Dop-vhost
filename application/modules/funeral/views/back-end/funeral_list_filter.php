@@ -69,7 +69,7 @@
       </div>
 
 
-      <div class="form-group row">
+      <div class="form-group row" style="display:none;">
         <div class="col-xs-12 col-sm-3">
           <h3><label for="col5_filter">วันที่ยื่นคำขอ:</label></h3>
         </div>
@@ -193,8 +193,16 @@
     $('.filter-status').on('change', function() {
       if(initRequiredFilterPay()){
         $(".span-required-filter-pay").text("*");
+        $(".filter-pay-start").prop('disabled', '');
+        $(".filter-pay-end").prop('disabled', '');
       }else{
         $(".span-required-filter-pay").text("");
+        $(".filter-pay-start").datepicker("setDate", null); // เคลียร์วันที่ใน Date Picker
+        $(".filter-pay-start").val(""); // เคลียร์ค่าใน input field
+        $(".filter-pay-end").datepicker("setDate", null); // เคลียร์วันที่ใน Date Picker
+        $(".filter-pay-end").val("");
+        $(".filter-pay-start").prop('disabled', 'disabled');
+        $(".filter-pay-end").prop('disabled', 'disabled');
       }
     });
     $('.filter-status').change();

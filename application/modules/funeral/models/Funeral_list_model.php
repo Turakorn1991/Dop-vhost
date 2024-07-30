@@ -19,7 +19,7 @@ class Funeral_list_model extends CI_Model
 
 	private function _get_datatables_query($perm_view , $isCount=false)
 	{
-
+		//ถ้าแก้ไขตรงนี้ต้องไปแก้ไข Function Export ด้วยน่ะ  Report_model->getFnrlInfo
 		$org_id = get_session('org_id');
 		$user_id = get_session('user_id');
 
@@ -220,7 +220,7 @@ class Funeral_list_model extends CI_Model
 					$whereGoalApp = " OR (A.insert_org_id = 174 AND H.addr_province = " . $provineCodeWhere . ")";
 				}
 			}
-			$this->db->where("( (A.insert_org_id =" . $org_id .") OR (A.insert_org_id = 174 OR A.update_org_id =".$org_id.")". $whereGoalApp . ")");
+			$this->db->where("( (A.insert_org_id =" . $org_id .") OR (A.insert_org_id = 174 AND A.update_org_id =".$org_id.")". $whereGoalApp . ")");
 		} else if ($perm_view == "Person") {
 			$this->db->where("A.insert_user_id=" . $user_id);
 		}
@@ -229,7 +229,22 @@ class Funeral_list_model extends CI_Model
 		$this->db->where("(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
 
 		//เรียงลำดับ
-		$this->db->order_by('A.date_of_pay ASC , A.date_of_req ASC');
+		$order_by_clause = "
+		CASE 
+			WHEN A.date_of_pay IS NULL THEN 0 
+			ELSE 1 
+		END ASC, 
+		CASE 
+			WHEN A.date_of_pay IS NULL THEN A.date_of_req 
+			ELSE NULL 
+		END ASC,
+		CASE 
+			WHEN A.date_of_pay IS NOT NULL THEN A.date_of_pay 
+			ELSE NULL 
+		END DESC
+	";
+
+	$this->db->order_by($order_by_clause, '', FALSE);
 	}
 
 	// private function _get_datatables_query()

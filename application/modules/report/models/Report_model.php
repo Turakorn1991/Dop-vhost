@@ -89,6 +89,39 @@ class Report_model extends CI_Model{
         }
         return null;
     }
+
+
+    function getPersInfoFullname($id){
+        $result =$this->db->select('pers_info.pid
+                                    ,pers_info.reg_addr_id
+                                    ,pers_info.pers_firstname_th
+                                    ,pers_info.pers_lastname_th
+                                    ,std_prename.prename_th'
+                                  )
+            ->from('pers_info')
+            ->join('std_prename','pers_info.pren_code=std_prename.pren_code','left')
+            ->where_in('pers_id',$id)
+            ->get();
+        if($result)
+            return $result->row();
+        return null;
+    }
+
+    function getAddrSelect($id,$select= ""){
+        $select = $select == "" ? "pers_addr.addr_home_no ,pers_addr.addr_moo ,tbl_subdistrict.area_name_th as locality,tbl_district.area_name_th as district,tbl_province.area_name_th as province" : "";
+        $result =$this->db->select($select)
+            ->from('pers_addr')
+            ->join('std_area as tbl_subdistrict','pers_addr.addr_sub_district=tbl_subdistrict.area_code','left')
+            ->join('std_area as tbl_district','pers_addr.addr_district=tbl_district.area_code','left')
+            ->join('std_area as tbl_province','pers_addr.addr_province=tbl_province.area_code','left')
+
+            ->where('addr_id',$id)
+            ->get();
+        if($result)
+            return $result->row();
+        return null;
+    }
+
     function getAddr($id){
         $result =$this->db->select('pers_addr.*,tbl_subdistrict.area_name_th as locality,tbl_district.area_name_th as district,tbl_province.area_name_th as province,addr_alley as alley')
             ->from('pers_addr')
@@ -537,7 +570,7 @@ class Report_model extends CI_Model{
 
         return null;
     }
-    function getFnrlInfo($filter){
+    function getFnrlInfo($filter,$isktb=false){
         //ถ้าตรงนี้แก้ไข ต้องแก้ไขที่ funeral->Funeral_list_model->_get_datatables_query ด้วย
         
 		$user_id = get_session('user_id');
@@ -558,24 +591,45 @@ class Report_model extends CI_Model{
         B.pers_firstname_th,
         B.pers_lastname_th,
         C.prename_th,
-        H.addr_home_no, 
-        H.addr_moo,
-        H.addr_lane, 
-        H.addr_road, 
-        std_sub_district.area_name_th as addr_sub_district, 
-        std_district.area_name_th as addr_district, 
-        std_province.area_name_th as addr_province";
+        I.org_title,
+        CC.prename_th as req_pers_prename_th,
+        BB.pers_firstname_th as req_pers_pers_firstname_th,
+        BB.pers_lastname_th as req_pers_pers_lastname_th,
+        BB.pid as req_pers_pid,
+        BB.reg_addr_id as req_pers_reg_addr_id
+        ";
+
+        if(!$isktb){
+            $selectStr = $selectStr.",CCC.prename_th as req_pers_aprv_prename_th,
+                                      BBB.pers_firstname_th as req_pers_aprv_pers_firstname_th,
+                                      BBB.pers_lastname_th as req_pers_aprv_pers_lastname_th,
+                                      HHH.addr_home_no as req_pers_addr_home_no,
+				                      HHH.addr_moo as req_pers_addr_moo,
+				                      tbl_subdistrict.area_name_th as req_pers_locality,
+				                      tbl_district.area_name_th as req_pers_district,
+				                      tbl_province.area_name_th as req_pers_province";
+        }else{
+            $selectStr = $selectStr.",BB.bank_acc_no as req_pers_bank_acc_no,
+                                      BB.email_addr as req_pers_email_addr,
+                                      BB.tel_no as req_pers_tel_no";
+        }
         $this->db->select($selectStr);
 		$this->db->from("fnrl_info as A");
 		$this->db->join('pers_info as B', 'A.pers_id=B.pers_id', 'left');
 		$this->db->join('std_prename as C', 'B.pren_code=C.pren_code', 'left');
-		$this->db->join('std_gender as D', 'B.gender_code=D.gender_code', 'left');
 		$this->db->join('pers_addr as H', 'B.pre_addr_id=H.addr_id', 'left');
         $this->db->join('usrm_org as I','A.insert_org_id=I.org_id','left');
-        $this->db->join('std_area as std_sub_district', 'std_sub_district.area_code = H.addr_sub_district', 'left');
-        $this->db->join('std_area as std_district', 'std_district.area_code = H.addr_district', 'left');
-        $this->db->join('std_area as std_province', 'std_province.area_code = H.addr_province', 'left');
+        $this->db->join('pers_info as BB', 'A.req_pers_id=BB.pers_id', 'left');
+		$this->db->join('std_prename as CC', 'BB.pren_code=CC.pren_code', 'left');
+        if(!$isktb){
+            $this->db->join('pers_info as BBB', 'A.req_pers_aprv_pers_id=BBB.pers_id', 'left');
+            $this->db->join('std_prename as CCC', 'BBB.pren_code=CCC.pren_code', 'left');
 
+            $this->db->join('pers_addr AS HHH', 'BB.reg_addr_id = HHH.addr_id', 'left');
+            $this->db->join('std_area AS tbl_subdistrict', 'HHH.addr_sub_district = tbl_subdistrict.area_code', 'left');
+            $this->db->join('std_area AS tbl_district', 'HHH.addr_district = tbl_district.area_code', 'left');
+            $this->db->join('std_area AS tbl_province', 'HHH.addr_province = tbl_province.area_code', 'left');
+        }
         //Where ตาม Filter
         $parameter = $filter;
 		$filter_org_id = "";
@@ -734,7 +788,7 @@ class Report_model extends CI_Model{
 					$whereGoalApp = " OR (A.insert_org_id = 174 AND H.addr_province = " . $provineCodeWhere . ")";
 				}
 			}
-			$this->db->where("( (A.insert_org_id =" . $org_id .") OR (A.insert_org_id = 174 OR A.update_org_id =".$org_id.")". $whereGoalApp . ")");
+			$this->db->where("( (A.insert_org_id =" . $org_id .") OR (A.insert_org_id = 174 AND A.update_org_id =".$org_id.")". $whereGoalApp . ")");
 		} else if ($perm_view == "Person") {
 			$this->db->where("A.insert_user_id=" . $user_id);
 		}
@@ -742,9 +796,25 @@ class Report_model extends CI_Model{
 		$this->db->where("(A.delete_user_id IS NULL AND A.delete_datetime IS NULL)");
 		$this->db->where("(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
 
+        
 		//เรียงลำดับ
-		$this->db->order_by('A.date_of_pay ASC , A.date_of_req ASC');
+		$order_by_clause = "
+            CASE 
+                WHEN A.date_of_pay IS NULL THEN 0 
+                ELSE 1 
+            END ASC, 
+            CASE 
+                WHEN A.date_of_pay IS NULL THEN A.date_of_req 
+                ELSE NULL 
+            END ASC,
+            CASE 
+                WHEN A.date_of_pay IS NOT NULL THEN A.date_of_pay 
+                ELSE NULL 
+            END DESC
+        ";
 
+        $this->db->order_by($order_by_clause, '', FALSE);
+        
         $result= $this->db->get();
         if($result){
            if($result->num_rows()>1) {
