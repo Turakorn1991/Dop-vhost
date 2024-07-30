@@ -241,8 +241,12 @@ class Funeral_list_model extends CI_Model
 		CASE 
 			WHEN A.date_of_pay IS NOT NULL THEN A.date_of_pay 
 			ELSE NULL 
-		END DESC
-	";
+		END DESC,
+		CASE 
+        	WHEN A.date_of_pay IS NOT NULL THEN A.update_datetime 
+        	ELSE NULL 
+    	END DESC
+		";
 
 	$this->db->order_by($order_by_clause, '', FALSE);
 	}

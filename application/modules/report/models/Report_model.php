@@ -802,19 +802,23 @@ class Report_model extends CI_Model{
         
 		//เรียงลำดับ
 		$order_by_clause = "
-            CASE 
-                WHEN A.date_of_pay IS NULL THEN 0 
-                ELSE 1 
-            END ASC, 
-            CASE 
-                WHEN A.date_of_pay IS NULL THEN A.date_of_req 
-                ELSE NULL 
-            END ASC,
-            CASE 
-                WHEN A.date_of_pay IS NOT NULL THEN A.date_of_pay 
-                ELSE NULL 
-            END DESC
-        ";
+		CASE 
+			WHEN A.date_of_pay IS NULL THEN 0 
+			ELSE 1 
+		END ASC, 
+		CASE 
+			WHEN A.date_of_pay IS NULL THEN A.date_of_req 
+			ELSE NULL 
+		END ASC,
+		CASE 
+			WHEN A.date_of_pay IS NOT NULL THEN A.date_of_pay 
+			ELSE NULL 
+		END DESC,
+	    CASE 
+        	WHEN A.date_of_pay IS NOT NULL THEN A.update_datetime 
+        	ELSE NULL 
+    	END DESC
+		";
 
         $this->db->order_by($order_by_clause, '', FALSE);
         
