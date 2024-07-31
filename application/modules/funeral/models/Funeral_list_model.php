@@ -227,7 +227,7 @@ class Funeral_list_model extends CI_Model
 
 		$this->db->where("(A.delete_user_id IS NULL AND A.delete_datetime IS NULL)");
 		$this->db->where("(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
-
+		$this->db->where("(A.date_of_req IS NOT NULL)");
 		//เรียงลำดับ
 		$order_by_clause = "
 		CASE 
@@ -237,12 +237,16 @@ class Funeral_list_model extends CI_Model
 		CASE 
 			WHEN A.date_of_pay IS NULL THEN A.date_of_req 
 			ELSE NULL 
-		END ASC,
+		END DESC,
+        CASE 
+			WHEN A.date_of_pay IS NULL THEN A.insert_datetime 
+			ELSE NULL 
+		END DESC,
 		CASE 
 			WHEN A.date_of_pay IS NOT NULL THEN A.date_of_pay 
 			ELSE NULL 
 		END DESC,
-		CASE 
+	    CASE 
         	WHEN A.date_of_pay IS NOT NULL THEN A.update_datetime 
         	ELSE NULL 
     	END DESC
