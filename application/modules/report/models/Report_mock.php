@@ -198,7 +198,8 @@ class Report_mock extends CI_Model
             $new[]=dateTH($result->date_of_req);
             $new[]=dateTH($result->date_of_pay);
             $new[]=!empty($result->req_pers_bank_name)?$result->req_pers_bank_name:""; 
-            $new[]=!empty($result->req_pers_bank_acc_no)?$result->req_pers_bank_acc_no:"" ; 
+            $new[]=!empty($result->req_pers_bank_acc_no)?$result->req_pers_bank_acc_no:"" ;
+            $new[]=!empty($result->req_pers_tel_no)?$result->req_pers_tel_no:"" ;  
             $new[]=number_format($result->pay_amount);
             $new[]=$result->payee_type;
             $new[]=$result->pay_channel;
