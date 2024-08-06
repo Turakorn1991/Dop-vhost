@@ -807,10 +807,6 @@ class Report_model extends CI_Model{
 			WHEN A.date_of_pay IS NULL THEN 0 
 			ELSE 1 
 		END ASC, 
-		CASE 
-			WHEN A.date_of_pay IS NULL THEN A.date_of_req 
-			ELSE NULL 
-		END DESC,
         CASE 
 			WHEN A.date_of_pay IS NULL THEN A.insert_datetime 
 			ELSE NULL 

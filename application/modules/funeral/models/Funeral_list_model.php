@@ -234,10 +234,6 @@ class Funeral_list_model extends CI_Model
 			WHEN A.date_of_pay IS NULL THEN 0 
 			ELSE 1 
 		END ASC, 
-		CASE 
-			WHEN A.date_of_pay IS NULL THEN A.date_of_req 
-			ELSE NULL 
-		END DESC,
         CASE 
 			WHEN A.date_of_pay IS NULL THEN A.insert_datetime 
 			ELSE NULL 
@@ -254,89 +250,6 @@ class Funeral_list_model extends CI_Model
 
 	$this->db->order_by($order_by_clause, '', FALSE);
 	}
-
-	// private function _get_datatables_query()
-	// {
-
-	// 	$whereGoalApp = " ";
-	// 	$org_id_current = get_session('org_id');
-	// 	if (isset($org_id_current)) {
-	// 		$provineCodeWhere = $this->admin_model->MapOrgIdToProvinceCode($org_id_current);
-	// 		if ($provineCodeWhere != "" && $provineCodeWhere != null) {
-	// 			$whereGoalApp = " OR (AA.insert_org_id = 174 AND HH.addr_province = " . $provineCodeWhere . " AND (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL)) ";
-	// 		}
-	// 	}
-	// 	$user_id = get_session('user_id');
-	// 	$app_id = 20;
-	// 	$usrpm = $this->admin_model->chkOnce_usrmPermiss($app_id, $user_id);
-
-	// 	$tableMain = "";
-	// 	$whereByRole = "";
-	// 	if ($usrpm['perm_view'] == 'All') {
-	// 		$tableMain = "(select AA.* from fnrl_info as AA where (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL))";
-	// 	} else if ($usrpm['perm_view'] == 'Organization') {
-	// 		$tableMain = "(select AA.* from fnrl_info as AA 
-	// 					  left join pers_info as BB on AA.pers_id = BB.pers_id
-	// 		              left join pers_addr as HH on BB.pre_addr_id = HH.addr_id
-	// 		              where (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL)
-	// 					  AND AA.insert_org_id = " . get_session('org_id') . $whereGoalApp . ")";
-	// 	} else if ($usrpm['perm_view'] == 'Person') {
-	// 		$tableMain = "(select AA.* from fnrl_info as AA where (AA.delete_user_id IS NULL AND AA.delete_datetime IS NULL) AND AA.insert_user_id =" . get_session('user_id') . " )";
-	// 	}
-
-	// 	$this->db->select("A.*");
-	// 	$this->db->from($tableMain . " as A");
-
-	// 	$this->db->join('pers_info as B', 'A.pers_id=B.pers_id', 'left');
-	// 	$this->db->join('std_gender as D', 'B.gender_code=D.gender_id', 'left');
-	// 	$this->db->join('usrm_org as I', 'A.insert_org_id=I.org_id', 'left');
-	// 	// $this->db->join('pers_addr as AD', 'B.pre_addr_id=AD.addr_id', 'left');
-
-	// 	$this->db->where("(B.delete_user_id IS NULL AND B.delete_datetime IS NULL)");
-
-	// 	foreach ($_POST['columns'] as $colId => $col) {
-	// 		if ($col['search']['value']) // if datatable send POST for search
-	// 		{
-	// 			if ($col['search']['value'] == '*') {
-
-	// 				$this->db->where($col['name'] . ' IS NOT NULL');
-	// 			} else if ($col['name'] == 'D.gender_code') {
-	// 				$this->db->where('B.gender_code', $col['search']['value']);
-	// 			} else if ($col['name'] == 'I.org_title') {
-	// 				$this->db->where('A.insert_org_id', $col['search']['value']);
-	// 			} else if ($col['name'] == 'start_age') {
-	// 				$year_age   = $col['search']['value'];
-	// 				$this->db->where("(IF(TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE()) IS NULL,0,TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE())) >= " . $year_age . ")");
-	// 			} else if ($col['name'] == 'end_age') {
-	// 				$year_age   = $col['search']['value'];
-	// 				$this->db->where("(IF(TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE()) IS NULL,0,TIMESTAMPDIFF(YEAR, B.date_of_birth, CURDATE())) <= " . $year_age . ")");
-	// 			} else if ($col['name'] == 'A.date_of_pay') {
-
-	// 				list($start, $end)   				= explode("_", $col['search']['value']);
-	// 				list($str_day, $str_month, $str_year) = explode("/", $start);
-	// 				list($en_day, $en_month, $en_year) 	= explode("/", $end);
-	// 				$start_year 						= ((int)$str_year - 543) . "/" . $str_month . "/" . $str_day;
-	// 				$end_year							= ((int)$en_year - 543) . "/" . $en_month . "/" . $en_day;
-	// 				$this->db->where("(A.date_of_pay BETWEEN '" . $start_year . "' AND '" . $end_year . "')");
-	// 			} else if ($col['name'] == 'A.date_of_req') {
-
-	// 				list($start, $end)   				= explode("_", $col['search']['value']);
-	// 				list($str_day, $str_month, $str_year) = explode("/", $start);
-	// 				list($en_day, $en_month, $en_year) 	= explode("/", $end);
-	// 				$start_year 						= ((int)$str_year - 543) . "/" . $str_month . "/" . $str_day;
-	// 				$end_year							= ((int)$en_year - 543) . "/" . $en_month . "/" . $en_day;
-	// 				$this->db->where("(A.date_of_req BETWEEN '" . $start_year . "' AND '" . $end_year . "')");
-	// 			} else {
-	// 				$this->db->like($col['name'], $col['search']['value']);
-	// 			}
-	// 		}
-	// 	}
-
-	// 	if (isset($this->order)) {
-	// 		$order = $this->order;
-	// 		$this->db->order_by(key($order), $order[key($order)]);
-	// 	}
-	// }
 
 	function get_datatables($perm_view)
 	{
